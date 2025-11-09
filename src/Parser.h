@@ -1,0 +1,449 @@
+#ifndef PARSER_H
+#define PARSER_H
+
+#include "Token.h"
+#include "AST.h"
+#include <vector>
+#include <stdexcept>
+#include <memory>
+
+class ParserError : public std::runtime_error {
+public:
+	Token token;
+	ParserError(const Token& t, const std::string& message)
+		: std::runtime_error(message), token(t) {}
+};
+
+
+class Parser {
+private:
+	std::vector<Token> tokens;
+	size_t current = 0;
+
+	bool isAtEnd() { return peek().type == TokenType::END_OF_FILE; }
+	Token peek() { return tokens[current]; }
+	Token previous() { return tokens[current - 1]; }
+
+	Token advance() {
+		if (!isAtEnd()) current++;
+		return previous();
+	}
+
+	bool check(TokenType type) {
+		if (isAtEnd()) return false;
+		return peek().type == type;
+	}
+
+	bool match(TokenType type) {
+		if (check(type)) {
+			advance();
+			return true;
+		}
+		return false;
+	}
+
+	void skipNewlines() {
+		while (match(TokenType::NEWLINE)) {}
+	}
+
+	Token consume(TokenType type, const std::string& message) {
+		if (check(type)) return advance();
+		throw ParserError(peek(), message);
+	}
+
+	ExprPtr expression() { return assignment(); }
+
+	ExprPtr assignment() {
+		ExprPtr expr = logicalOr();
+
+		if (match(TokenType::EQUAL)) {
+			ExprPtr value = assignment();
+
+			if (auto var = std::dynamic_pointer_cast<VariableExpr>(expr)) {
+				return std::make_shared<AssignmentExpr>(var->name, value);
+			}
+
+			throw ParserError(previous(), "Invalid assignment target");
+		}
+
+		return expr;
+	}
+
+	ExprPtr logicalOr() {
+		ExprPtr expr = logicalAnd();
+		while (match(TokenType::OR)) {
+			Token op = previous();
+			ExprPtr right = logicalAnd();
+			expr = std::make_shared<BinaryExpr>(expr, op, right);
+		}
+		return expr;
+	}
+
+	ExprPtr logicalAnd() {
+		ExprPtr expr = equality();
+		while (match(TokenType::AND)) {
+			Token op = previous();
+			ExprPtr right = equality();
+			expr = std::make_shared<BinaryExpr>(expr, op, right);
+		}
+		return expr;
+	}
+
+	ExprPtr equality() {
+		ExprPtr expr = comparison();
+		while (match(TokenType::EQUAL_EQUAL) || match(TokenType::BANG_EQUAL)) {
+			Token op = previous();
+			ExprPtr right = comparison();
+			expr = std::make_shared<BinaryExpr>(expr, op, right);
+		}
+		return expr;
+	}
+
+	ExprPtr comparison() {
+		ExprPtr expr = addition();
+		while (match(TokenType::GREATER) || match(TokenType::GREATER_EQUAL) ||
+			match(TokenType::LESS) || match(TokenType::LESS_EQUAL) ||
+			match(TokenType::IN)) {
+			Token op = previous();
+			ExprPtr right = addition();
+			expr = std::make_shared<BinaryExpr>(expr, op, right);
+		}
+		return expr;
+	}
+
+	ExprPtr addition() {
+		ExprPtr expr = multiplication();
+		while (match(TokenType::MINUS) || match(TokenType::PLUS)) {
+			Token op = previous();
+			ExprPtr right = multiplication();
+			expr = std::make_shared<BinaryExpr>(expr, op, right);
+		}
+		return expr;
+	}
+
+	ExprPtr multiplication() {
+		ExprPtr expr = exponentiation();
+		while (match(TokenType::SLASH) || match(TokenType::STAR) || match(TokenType::PERCENT)) {
+			Token op = previous();
+			ExprPtr right = exponentiation();
+			expr = std::make_shared<BinaryExpr>(expr, op, right);
+		}
+		return expr;
+	}
+
+	ExprPtr exponentiation() {
+		ExprPtr expr = unary();
+		while (match(TokenType::STAR_STAR)) {
+			Token op = previous();
+			ExprPtr right = unary();
+			expr = std::make_shared<BinaryExpr>(expr, op, right);
+		}
+		return expr;
+	}
+
+	ExprPtr unary() {
+		if (match(TokenType::NOT) || match(TokenType::MINUS)) {
+			Token op = previous();
+			ExprPtr right = unary();
+			return std::make_shared<UnaryExpr>(op, right);
+		}
+		return call();
+	}
+
+	ExprPtr call() {
+		ExprPtr expr = primary();
+
+		while (true) {
+			if (match(TokenType::LPAREN)) {
+				expr = finishCall(expr);
+			}
+			else if (match(TokenType::LBRACKET)) {
+				ExprPtr index = expression();
+				consume(TokenType::RBRACKET, "Expect ']' after array index");
+				expr = std::make_shared<IndexExpr>(expr, index);
+			}
+			else {
+				break;
+			}
+		}
+
+		return expr;
+	}
+
+	ExprPtr finishCall(ExprPtr callee) {
+		std::vector<ExprPtr> arguments;
+		if (!check(TokenType::RPAREN)) {
+			do {
+				arguments.push_back(expression());
+			} while (match(TokenType::COMMA));
+		}
+		consume(TokenType::RPAREN, "Expect ')' after arguments");
+		return std::make_shared<CallExpr>(callee, arguments);
+	}
+
+	ExprPtr primary() {
+		if (match(TokenType::FALSE)) return std::make_shared<LiteralExpr>(Value::Bool(false));
+		if (match(TokenType::TRUE)) return std::make_shared<LiteralExpr>(Value::Bool(true));
+		if (match(TokenType::NIL)) return std::make_shared<LiteralExpr>(Value::Nil());
+
+		if (match(TokenType::NUMBER)) {
+			return std::make_shared<LiteralExpr>(Value::Number(std::stod(previous().lexeme)));
+		}
+
+		if (match(TokenType::STRING)) {
+			return std::make_shared<LiteralExpr>(Value::String(previous().lexeme));
+		}
+
+		if (match(TokenType::IDENTIFIER)) {
+			return std::make_shared<VariableExpr>(previous().lexeme);
+		}
+
+		if (match(TokenType::LPAREN)) {
+			ExprPtr expr = expression();
+			consume(TokenType::RPAREN, "Expect ')' after expression");
+			return std::make_shared<GroupingExpr>(expr);
+		}
+
+		if (match(TokenType::LBRACKET)) {
+			std::vector<ExprPtr> elements;
+			if (!check(TokenType::RBRACKET)) {
+				do {
+					elements.push_back(expression());
+				} while (match(TokenType::COMMA));
+			}
+			consume(TokenType::RBRACKET, "Expect ']' after array elements");
+			return std::make_shared<ArrayExpr>(elements);
+		}
+
+		throw ParserError(peek(), "Expect expression");
+	}
+
+	StmtPtr statement() {
+		if (match(TokenType::PRINT)) return printStatement();
+		if (match(TokenType::IF)) return ifStatement();
+		if (match(TokenType::WHILE)) return whileStatement();
+		if (match(TokenType::FOR)) return forStatement();
+		if (match(TokenType::RETURN)) return returnStatement();
+		return expressionStatement();
+	}
+
+	std::vector<StmtPtr> parseBlockBody() {
+		std::vector<StmtPtr> statements;
+		skipNewlines();
+		while (!check(TokenType::END) && !check(TokenType::ELSE) && !isAtEnd()) {
+			statements.push_back(declaration());
+			skipNewlines();
+		}
+		return statements;
+	}
+
+	StmtPtr printStatement() {
+		ExprPtr value = expression();
+		skipNewlines();
+		return std::make_shared<PrintStmt>(value);
+	}
+
+	StmtPtr expressionStatement() {
+		ExprPtr expr = expression();
+		skipNewlines();
+		return std::make_shared<ExprStmt>(expr);
+	}
+
+	StmtPtr ifStatement() {
+		ExprPtr condition = expression();
+		skipNewlines();
+
+		std::vector<StmtPtr> thenStmts;
+		while (!check(TokenType::ELSE) && !check(TokenType::END) && !isAtEnd()) {
+			thenStmts.push_back(declaration());
+			skipNewlines();
+		}
+		StmtPtr thenBranch = std::make_shared<BlockStmt>(thenStmts);
+
+		StmtPtr elseBranch = nullptr;
+		if (match(TokenType::ELSE)) {
+			skipNewlines();
+			std::vector<StmtPtr> elseStmts;
+			while (!check(TokenType::END) && !isAtEnd()) {
+				elseStmts.push_back(declaration());
+				skipNewlines();
+			}
+			elseBranch = std::make_shared<BlockStmt>(elseStmts);
+		}
+
+		consume(TokenType::END, "Expect 'end' after if statement");
+		return std::make_shared<IfStmt>(condition, thenBranch, elseBranch);
+	}
+
+	StmtPtr whileStatement() {
+		ExprPtr condition = expression();
+		skipNewlines();
+
+		std::vector<StmtPtr> bodyStmts;
+		while (!check(TokenType::END) && !isAtEnd()) {
+			bodyStmts.push_back(declaration());
+			skipNewlines();
+		}
+		StmtPtr body = std::make_shared<BlockStmt>(bodyStmts);
+
+		consume(TokenType::END, "Expect 'end' after while body");
+		return std::make_shared<WhileStmt>(condition, body);
+	}
+
+	StmtPtr forStatement() {
+		consume(TokenType::LPAREN, "Expect '(' after 'for'");
+
+		// 1. Initializer
+		StmtPtr initializer;
+		if (match(TokenType::SEMICOLON)) {
+			initializer = nullptr;
+		}
+		else if (match(TokenType::LET)) {
+			Token name = consume(TokenType::IDENTIFIER, "Expect variable name");
+			ExprPtr initExpr = nullptr;
+			if (match(TokenType::EQUAL)) {
+				initExpr = expression();
+			}
+			initializer = std::make_shared<VarStmt>(name.lexeme, initExpr);
+			consume(TokenType::SEMICOLON, "Expect ';' after loop initializer");
+		}
+		else {
+			initializer = std::make_shared<ExprStmt>(expression());
+			consume(TokenType::SEMICOLON, "Expect ';' after loop initializer");
+		}
+
+		// 2. Condition
+		ExprPtr condition = nullptr;
+		if (!check(TokenType::SEMICOLON)) {
+			condition = expression();
+		}
+		consume(TokenType::SEMICOLON, "Expect ';' after loop condition");
+
+		// 3. Increment
+		ExprPtr increment = nullptr;
+		if (!check(TokenType::RPAREN)) {
+			increment = expression();
+		}
+		consume(TokenType::RPAREN, "Expect ')' after for clauses");
+		skipNewlines();
+
+		// 4. Body
+		std::vector<StmtPtr> bodyStmts;
+		while (!check(TokenType::END) && !isAtEnd()) {
+			bodyStmts.push_back(declaration());
+			skipNewlines();
+		}
+		consume(TokenType::END, "Expect 'end' after for body");
+
+		// 5. Desugar
+		if (increment != nullptr) {
+			bodyStmts.push_back(std::make_shared<ExprStmt>(increment));
+		}
+		StmtPtr body = std::make_shared<BlockStmt>(bodyStmts);
+
+		if (condition == nullptr) {
+			condition = std::make_shared<LiteralExpr>(Value::Bool(true));
+		}
+		StmtPtr whileLoop = std::make_shared<WhileStmt>(condition, body);
+
+		if (initializer != nullptr) {
+			std::vector<StmtPtr> blockStmts;
+			blockStmts.push_back(initializer);
+			blockStmts.push_back(whileLoop);
+			return std::make_shared<BlockStmt>(blockStmts);
+		}
+
+		return whileLoop;
+	}
+
+
+	StmtPtr functionStatement() {
+		Token name = consume(TokenType::IDENTIFIER, "Expect function name");
+		consume(TokenType::LPAREN, "Expect '(' after function name");
+
+		std::vector<std::string> params;
+		if (!check(TokenType::RPAREN)) {
+			do {
+				params.push_back(consume(TokenType::IDENTIFIER, "Expect parameter name").lexeme);
+			} while (match(TokenType::COMMA));
+		}
+
+		consume(TokenType::RPAREN, "Expect ')' after parameters");
+		skipNewlines();
+
+		std::vector<StmtPtr> body;
+		while (!check(TokenType::END) && !isAtEnd()) {
+			body.push_back(declaration());
+			skipNewlines();
+		}
+
+		consume(TokenType::END, "Expect 'end' after function body");
+		return std::make_shared<FunctionStmt>(name.lexeme, params, body);
+	}
+
+	StmtPtr returnStatement() {
+		ExprPtr value = nullptr;
+		if (!check(TokenType::NEWLINE) && !check(TokenType::END) && !isAtEnd()) {
+			value = expression();
+		}
+		skipNewlines();
+		return std::make_shared<ReturnStmt>(value);
+	}
+
+	StmtPtr declaration() {
+		try {
+			if (match(TokenType::LET)) {
+				Token name = consume(TokenType::IDENTIFIER, "Expect variable name");
+				ExprPtr initializer = nullptr;
+
+				if (match(TokenType::EQUAL)) {
+					initializer = expression();
+				}
+
+				skipNewlines();
+				return std::make_shared<VarStmt>(name.lexeme, initializer);
+			}
+
+			if (match(TokenType::FUNC)) {
+				return functionStatement();
+			}
+
+			return statement();
+		}
+		catch (const ParserError& e) {
+			// Synchronize
+			while (!isAtEnd()) {
+				if (previous().type == TokenType::NEWLINE) break;
+				switch (peek().type) {
+				case TokenType::FUNC:
+				case TokenType::LET:
+				case TokenType::FOR:
+				case TokenType::IF:
+				case TokenType::WHILE:
+				case TokenType::PRINT:
+				case TokenType::RETURN:
+					break;
+				default:
+					advance();
+				}
+			}
+			throw;
+		}
+	}
+
+public:
+	Parser(const std::vector<Token>& toks) : tokens(toks) {}
+
+	std::vector<StmtPtr> parse() {
+		std::vector<StmtPtr> statements;
+		skipNewlines();
+		while (!isAtEnd()) {
+			StmtPtr stmt = declaration();
+			if (stmt) statements.push_back(stmt);
+			skipNewlines();
+		}
+		return statements;
+	}
+};
+
+#endif
