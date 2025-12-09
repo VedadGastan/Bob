@@ -171,8 +171,15 @@ inline Value Value::applyBinaryOp(TokenType opType, const Value& other) const {
 		return Value::String(ss.str());
 	}
 
+	if (type == ValueType::STRING && opType == TokenType::PLUS) {
+		return Value::String(stringValue + other.toString());
+	}
+
+	if (type != ValueType::STRING && other.type == ValueType::STRING && opType == TokenType::PLUS) {
+		return Value::String(toString() + other.stringValue);
+	}
+
 	if (type == ValueType::STRING && other.type == ValueType::STRING) {
-		if (opType == TokenType::PLUS) return Value::String(stringValue + other.stringValue);
 		if (opType == TokenType::EQUAL_EQUAL) return Value::Bool(stringValue == other.stringValue);
 		if (opType == TokenType::BANG_EQUAL) return Value::Bool(stringValue != other.stringValue);
 		if (opType == TokenType::IN)
@@ -189,9 +196,25 @@ inline Value Value::applyBinaryOp(TokenType opType, const Value& other) const {
 		return Value::Bool(false);
 	}
 
+	if (opType == TokenType::EQUAL_EQUAL) {
+		if (type == ValueType::STRING && other.type != ValueType::STRING) {
+			return Value::Bool(stringValue == other.toString());
+		}
+		if (type != ValueType::STRING && other.type == ValueType::STRING) {
+			return Value::Bool(toString() == other.stringValue);
+		}
+		return Value::Bool(isEqual(other));
+	}
 
-	if (opType == TokenType::EQUAL_EQUAL) return Value::Bool(isEqual(other));
-	if (opType == TokenType::BANG_EQUAL) return Value::Bool(!isEqual(other));
+	if (opType == TokenType::BANG_EQUAL) {
+		if (type == ValueType::STRING && other.type != ValueType::STRING) {
+			return Value::Bool(stringValue != other.toString());
+		}
+		if (type != ValueType::STRING && other.type == ValueType::STRING) {
+			return Value::Bool(toString() != other.stringValue);
+		}
+		return Value::Bool(!isEqual(other));
+	}
 
 	throw std::runtime_error("Unsupported binary operation");
 }

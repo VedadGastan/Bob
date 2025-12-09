@@ -1,0 +1,95 @@
+print "========================================"
+print "BOB LANGUAGE SHOWCASE"
+print "Featuring Parallel Programming"
+print "========================================"
+print ""
+
+print "1. COMPOUND OPERATORS"
+print "----------------------"
+var counter = 0
+counter++
+print "After counter++: " + counter
+counter += 10
+print "After counter += 10: " + counter
+counter *= 2
+print "After counter *= 2: " + counter
+print ""
+
+print "2. CLOSURES & FUNCTIONS"
+print "------------------------"
+func makeMultiplier(factor)
+    func multiply(n)
+        return n * factor
+    end
+    return multiply
+end
+
+var double = makeMultiplier(2)
+var triple = makeMultiplier(3)
+print "double(5) = " + double(5)
+print "triple(5) = " + triple(5)
+print ""
+
+print "3. ARRAY OPERATIONS"
+print "--------------------"
+var data = [10, 20, 30, 40, 50]
+print "Original array: " + data
+print "Length: " + len(data)
+print "First element: " + data[0]
+print "Last element: " + data[-1]
+print ""
+
+print "4. PARALLEL PROCESSING (Main Feature!)"
+print "---------------------------------------"
+var dataset = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+var parallel_sum = 0
+
+print "Processing array in parallel..."
+parallel i in 0..len(dataset)
+    parallel_sum += dataset[i] * dataset[i]
+end
+print "Sum of squares: " + parallel_sum
+print ""
+
+print "5. PARALLEL MATRIX MULTIPLICATION"
+print "----------------------------------"
+var matrix_result = 0
+print "Computing 5x5 matrix operation in parallel..."
+parallel row in 0..5
+    parallel col in 0..5
+        matrix_result += row * col
+    end
+end
+print "Matrix computation result: " + matrix_result
+print ""
+
+print "6. MATHEMATICAL FUNCTIONS"
+print "---------------------------"
+func calculate_circle_area(radius)
+    var pi = 3.14159
+    return pi * pow(radius, 2)
+end
+
+print "Circle area (r=5): " + floor(calculate_circle_area(5))
+print "Square root of 144: " + sqrt(144)
+print "2^10 = " + pow(2, 10)
+print ""
+
+print "7. CONTROL FLOW"
+print "----------------"
+func fibonacci(n)
+    if n <= 1
+        return n
+    end
+    return fibonacci(n - 1) + fibonacci(n - 2)
+end
+
+print "Fibonacci sequence (first 10):"
+for (var i = 0; i < 10; i++)
+    print "fib(" + i + ") = " + fibonacci(i)
+end
+print ""
+
+print "========================================"
+print "BOB - Perfect for Parallel Programming!"
+print "========================================"

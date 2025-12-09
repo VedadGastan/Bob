@@ -1,0 +1,31 @@
+print "========================================"
+print "ERROR HANDLING TESTS"
+print "========================================"
+print ""
+
+print "Testing undefined variable..."
+print ""
+
+print "Testing division by zero..."
+print "Expected: RuntimeError"
+var result = 10 / 0
+print ""
+
+print "Testing array out of bounds..."
+print "Expected: RuntimeError"
+var arr = [1, 2, 3]
+print arr[10]
+print ""
+
+print "Testing wrong argument count..."
+print "Expected: RuntimeError"
+func needs_two(a, b)
+    return a + b
+end
+needs_two(5)
+print ""
+
+print "Testing type error in operation..."
+print "Expected: RuntimeError"
+var bad = "hello" * "world"
+print ""

@@ -1,0 +1,223 @@
+func test(name, expected, actual)
+    if expected == actual
+        print "OK " + name
+    else
+        print "NOT OK " + name
+        print "  Expected: " + expected
+        print "  Actual: " + actual
+    end
+end
+
+func test_bool(name, condition)
+    if condition
+        print "OK " + name
+    else
+        print "NOT OK " + name + " - condition was false"
+    end
+end
+
+print "========================================"
+print "BOB LANGUAGE TEST SUITE"
+print "========================================"
+print ""
+
+print "--- Basic Arithmetic ---"
+test("Addition", 7, 3 + 4)
+test("Subtraction", 5, 10 - 5)
+test("Multiplication", 20, 4 * 5)
+test("Division", 4, 20 / 5)
+test("Modulo", 2, 17 % 5)
+test("Exponentiation", 8, 2 ** 3)
+test("Negative", -5, -5)
+print ""
+
+print "--- Operator Precedence ---"
+test("Precedence 1", 14, 2 + 3 * 4)
+test("Precedence 2", 20, (2 + 3) * 4)
+test("Precedence 3", 19, 3 + 4 ** 2)
+test("Precedence 4", 49, (3 + 4) ** 2)
+print ""
+
+print "--- Variables ---"
+var x = 10
+test("Variable assignment", 10, x)
+x = 20
+test("Variable reassignment", 20, x)
+var y = x + 5
+test("Variable expression", 25, y)
+print ""
+
+print "--- Compound Assignment ---"
+var a = 10
+a += 5
+test("Plus equals", 15, a)
+a -= 3
+test("Minus equals", 12, a)
+a *= 2
+test("Times equals", 24, a)
+a /= 4
+test("Divide equals", 6, a)
+a %= 4
+test("Modulo equals", 2, a)
+print ""
+
+print "--- Postfix Operators ---"
+var b = 5
+var old_b = b++
+test("Postfix ++ returns old value", 5, old_b)
+test("Postfix ++ increments", 6, b)
+var old_b2 = b--
+test("Postfix -- returns old value", 6, old_b2)
+test("Postfix -- decrements", 5, b)
+print ""
+
+print "--- String Operations ---"
+test("String concatenation", "HelloWorld", "Hello" + "World")
+test("String repetition", "aaa", "a" * 3)
+test_bool("String contains", "el" in "Hello")
+test_bool("String not contains", not ("xyz" in "Hello"))
+test("String comparison", true, "abc" == "abc")
+print ""
+
+print "--- Boolean Logic ---"
+test("AND true", true, true and true)
+test("AND false", false, true and false)
+test("OR true", true, true or false)
+test("OR false", false, false or false)
+test("NOT true", false, not true)
+test("NOT false", true, not false)
+print ""
+
+print "--- Comparison Operators ---"
+test("Greater than", true, 5 > 3)
+test("Greater or equal", true, 5 >= 5)
+test("Less than", true, 3 < 5)
+test("Less or equal", true, 3 <= 3)
+test("Equal", true, 5 == 5)
+test("Not equal", true, 5 != 3)
+print ""
+
+print "--- Arrays ---"
+var arr = [1, 2, 3, 4, 5]
+test("Array creation", "[1, 2, 3, 4, 5]", arr)
+test("Array indexing", 3, arr[2])
+test("Array negative index", 5, arr[-1])
+test("Array length", 5, len(arr))
+test_bool("Array contains", 3 in arr)
+test_bool("Array not contains", not (10 in arr))
+print ""
+
+print "--- Array Manipulation ---"
+var arr2 = [10, 20, 30]
+arr2[1] = 25
+test("Array element update", 25, arr2[1])
+print ""
+
+print "--- Control Flow ---"
+var result = 0
+if true
+    result = 1
+end
+test("If true", 1, result)
+
+result = 0
+if false
+    result = 1
+else
+    result = 2
+end
+test("If false with else", 2, result)
+
+result = 0
+var i = 0
+while i < 5
+    result += i
+    i++
+end
+test("While loop", 10, result)
+print ""
+
+print "--- For Loop ---"
+var sum = 0
+for (var j = 0; j < 5; j += 1)
+    sum += j
+end
+test("For loop", 10, sum)
+print ""
+
+print "--- Functions ---"
+func add(a, b)
+    return a + b
+end
+test("Function call", 8, add(3, 5))
+
+func factorial(n)
+    if n <= 1
+        return 1
+    end
+    return n * factorial(n - 1)
+end
+test("Recursive function", 120, factorial(5))
+
+func no_return()
+    var x = 5
+end
+test("Function no return", "nil", no_return())
+print ""
+
+print "--- Closures ---"
+func makeCounter()
+    var count = 0
+    func increment()
+        count += 1
+        return count
+    end
+    return increment
+end
+var counter = makeCounter()
+counter()
+counter()
+test("Closure", 3, counter())
+print ""
+
+print "--- Built-in Functions ---"
+test("sqrt", 5, sqrt(25))
+test("pow", 8, pow(2, 3))
+test("abs positive", 5, abs(5))
+test("abs negative", 5, abs(-5))
+test("floor", 3, floor(3.7))
+test("ceil", 4, ceil(3.2))
+print ""
+
+print "--- Parallel Programming ---"
+var parallel_sum = 0
+parallel i in 0..5
+    parallel_sum += i
+end
+test("Parallel for", 10, parallel_sum)
+print ""
+
+print "--- Range Function ---"
+var range_arr = range(0, 5)
+test("Range function", "[0, 1, 2, 3, 4]", range_arr)
+print ""
+
+print "--- Scope Testing ---"
+var outer = 10
+func scope_test()
+    var inner = 20
+    var outer = 30
+    return outer + inner
+end
+test("Inner scope shadows outer", 50, scope_test())
+test("Outer scope unchanged", 10, outer)
+print ""
+
+print "--- Complex Expression ---"
+var complex = (2 + 3) * 4 - 10 / 2 + 2 ** 3
+test("Complex expression", 23, complex)
+print ""
+
+print "========================================"
+print "TEST SUITE COMPLETE"
+print "========================================"

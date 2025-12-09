@@ -43,8 +43,10 @@ goto end
 
 :test
 if not exist %OUTPUT% call :build
-echo Running examples\test.bob...
-%OUTPUT% examples\test.bob
+echo Running all tests...
+cd examples
+call run_all_tests.bat
+cd ..
 goto end
 
 :clean
@@ -58,7 +60,7 @@ echo Commands:
 echo   build       - Compile the interpreter
 echo   run ^<file^>  - Run a Bob program
 echo   repl        - Start REPL
-echo   test        - Run examples\examples.bob
+echo   test        - Run all tests in examples folder
 echo   clean       - Remove build folder
 goto end
 

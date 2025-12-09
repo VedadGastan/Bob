@@ -36,6 +36,23 @@ public:
 	AssignmentExpr(const std::string& n, ExprPtr v) : name(n), value(v) {}
 };
 
+class CompoundAssignExpr : public Expr {
+public:
+	std::string name;
+	Token op;
+	ExprPtr value;
+	CompoundAssignExpr(const std::string& n, const Token& o, ExprPtr v)
+		: name(n), op(o), value(v) {
+	}
+};
+
+class PostfixExpr : public Expr {
+public:
+	std::string name;
+	Token op;
+	PostfixExpr(const std::string& n, const Token& o) : name(n), op(o) {}
+};
+
 class GroupingExpr : public Expr {
 public:
 	ExprPtr expression;
@@ -70,6 +87,16 @@ public:
 	ExprPtr array;
 	ExprPtr index;
 	IndexExpr(ExprPtr a, ExprPtr i) : array(a), index(i) {}
+};
+
+class IndexAssignExpr : public Expr {
+public:
+	ExprPtr array;
+	ExprPtr index;
+	ExprPtr value;
+	IndexAssignExpr(ExprPtr a, ExprPtr i, ExprPtr v)
+		: array(a), index(i), value(v) {
+	}
 };
 
 class CallExpr : public Expr {
@@ -128,6 +155,17 @@ public:
 	ExprPtr condition;
 	StmtPtr body;
 	WhileStmt(ExprPtr cond, StmtPtr b) : condition(cond), body(b) {}
+};
+
+class ParallelForStmt : public Stmt {
+public:
+	std::string varName;
+	ExprPtr start;
+	ExprPtr end;
+	StmtPtr body;
+	ParallelForStmt(const std::string& var, ExprPtr s, ExprPtr e, StmtPtr b)
+		: varName(var), start(s), end(e), body(b) {
+	}
 };
 
 class FunctionStmt : public Stmt {

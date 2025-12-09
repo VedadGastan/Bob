@@ -1,0 +1,88 @@
+print "========================================"
+print "PARALLEL PROGRAMMING TESTS"
+print "========================================"
+print ""
+
+print "--- System Information ---"
+print "Available CPU threads: " + num_threads()
+print ""
+
+print "--- Basic Parallel Loop (UNSAFE - Race Condition) ---"
+var sum = 0
+parallel i in 0..10
+    sum += i
+end
+print "Parallel sum 0..10: " + sum
+print "Expected: 45 (may vary due to race condition)"
+print "Note: This demonstrates why thread safety matters!"
+print ""
+
+print "--- Thread-Safe Parallel Sum (Using atomic_add) ---"
+var safe_sum = 0
+parallel i in 0..100
+    atomic_add("safe_sum", i)
+end
+print "Safe parallel sum 0..100: " + safe_sum
+print "Expected: 4950"
+print ""
+
+print "--- Parallel Array Processing ---"
+var numbers = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+var total = 0
+parallel i in 0..len(numbers)
+    atomic_add("total", numbers[i])
+end
+print "Array sum: " + total
+print "Expected: 55"
+print ""
+
+print "--- Parallel Computation (Large Range) ---"
+var squares_sum = 0
+parallel i in 1..1001
+    atomic_add("squares_sum", i * i)
+end
+print "Sum of squares 1..1000: " + squares_sum
+print "Expected: 333833500"
+print ""
+
+print "--- Performance Test: Sequential vs Parallel ---"
+func sequential_test()
+    var result = 0
+    var i = 0
+    while i < 10000
+        result += i * i
+        i++
+    end
+    return result
+end
+
+print "Sequential computation..."
+var seq_result = sequential_test()
+print "Sequential result: " + seq_result
+
+print "Parallel computation..."
+var par_result = 0
+parallel i in 0..10000
+    atomic_add("par_result", i * i)
+end
+print "Parallel result: " + par_result
+print "Both should equal: 333283335000"
+print ""
+
+print "--- Thread Info ---"
+print "Current thread ID: " + thread_id()
+print "Number of threads: " + num_threads()
+print ""
+
+print "--- Parallel Task Distribution ---"
+var task_count = 0
+parallel i in 0..1000
+    atomic_add("task_count", 1)
+end
+print "Tasks completed: " + task_count
+print "Expected: 1000"
+print ""
+
+print "========================================"
+print "PARALLEL TESTS COMPLETE"
+print "========================================"

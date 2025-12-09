@@ -135,16 +135,28 @@ public:
 			case '.': addToken(TokenType::DOT); break;
 			case ':': addToken(TokenType::COLON); break;
 			case ';': addToken(TokenType::SEMICOLON); break;
-			case '+': addToken(TokenType::PLUS); break;
-			case '%': addToken(TokenType::PERCENT); break;
+			case '%':
+				addToken(match('=') ? TokenType::PERCENT_EQUAL : TokenType::PERCENT);
+				break;
+			case '+':
+				if (match('+')) addToken(TokenType::PLUS_PLUS);
+				else if (match('=')) addToken(TokenType::PLUS_EQUAL);
+				else addToken(TokenType::PLUS);
+				break;
 			case '*':
-				addToken(match('*') ? TokenType::STAR_STAR : TokenType::STAR);
+				if (match('*')) addToken(TokenType::STAR_STAR);
+				else if (match('=')) addToken(TokenType::STAR_EQUAL);
+				else addToken(TokenType::STAR);
 				break;
 			case '-':
-				addToken(match('>') ? TokenType::ARROW : TokenType::MINUS);
+				if (match('>')) addToken(TokenType::ARROW);
+				else if (match('-')) addToken(TokenType::MINUS_MINUS);
+				else if (match('=')) addToken(TokenType::MINUS_EQUAL);
+				else addToken(TokenType::MINUS);
 				break;
 			case '/':
 				if (match('/')) skipComment();
+				else if (match('=')) addToken(TokenType::SLASH_EQUAL);
 				else addToken(TokenType::SLASH);
 				break;
 			case '=':

@@ -7,11 +7,14 @@
 enum class TokenType {
 	NUMBER, STRING, TRUE, FALSE, NIL,
 	IDENTIFIER,
-	LET, FUNC, IF, ELSE, WHILE, FOR, RETURN, BREAK, CONTINUE,
+	VAR, FUNC, IF, ELSE, WHILE, FOR, RETURN, BREAK, CONTINUE,
 	PRINT, IN, AND, OR, NOT,
+	PARALLEL, ASYNC, AWAIT,
 
 	PLUS, MINUS, STAR, SLASH, PERCENT,
 	STAR_STAR,
+	PLUS_PLUS, MINUS_MINUS,
+	PLUS_EQUAL, MINUS_EQUAL, STAR_EQUAL, SLASH_EQUAL, PERCENT_EQUAL,
 
 	EQUAL, EQUAL_EQUAL, BANG_EQUAL,
 	LESS, LESS_EQUAL, GREATER, GREATER_EQUAL,
@@ -34,24 +37,27 @@ struct Token {
 };
 
 static std::map<std::string, TokenType> keywords = {
-	{"let", TokenType::LET}, 
+	{"var", TokenType::VAR},
 	{"func", TokenType::FUNC},
-	{"if", TokenType::IF}, 
+	{"if", TokenType::IF},
 	{"else", TokenType::ELSE},
-	{"while", TokenType::WHILE}, 
+	{"while", TokenType::WHILE},
 	{"for", TokenType::FOR},
-	{"return", TokenType::RETURN}, 
+	{"return", TokenType::RETURN},
 	{"break", TokenType::BREAK},
-	{"continue", TokenType::CONTINUE}, 
+	{"continue", TokenType::CONTINUE},
 	{"print", TokenType::PRINT},
-	{"in", TokenType::IN}, 
+	{"in", TokenType::IN},
 	{"and", TokenType::AND},
-	{"or", TokenType::OR}, 
+	{"or", TokenType::OR},
 	{"not", TokenType::NOT},
-	{"true", TokenType::TRUE}, 
+	{"true", TokenType::TRUE},
 	{"false", TokenType::FALSE},
-	{"nil", TokenType::NIL}, 
-	{"end", TokenType::END}
+	{"nil", TokenType::NIL},
+	{"end", TokenType::END},
+	{"parallel", TokenType::PARALLEL},
+	{"async", TokenType::ASYNC},
+	{"await", TokenType::AWAIT}
 };
 
 #endif

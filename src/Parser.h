@@ -63,6 +63,23 @@ private:
 				return std::make_shared<AssignmentExpr>(var->name, value);
 			}
 
+			if (auto index = std::dynamic_pointer_cast<IndexExpr>(expr)) {
+				return std::make_shared<IndexAssignExpr>(index->array, index->index, value);
+			}
+
+			throw ParserError(previous(), "Invalid assignment target");
+		}
+
+		if (match(TokenType::PLUS_EQUAL) || match(TokenType::MINUS_EQUAL) ||
+			match(TokenType::STAR_EQUAL) || match(TokenType::SLASH_EQUAL) ||
+			match(TokenType::PERCENT_EQUAL)) {
+			Token op = previous();
+			ExprPtr value = assignment();
+
+			if (auto var = std::dynamic_pointer_cast<VariableExpr>(expr)) {
+				return std::make_shared<CompoundAssignExpr>(var->name, op, value);
+			}
+
 			throw ParserError(previous(), "Invalid assignment target");
 		}
 
@@ -162,6 +179,15 @@ private:
 				consume(TokenType::RBRACKET, "Expect ']' after array index");
 				expr = std::make_shared<IndexExpr>(expr, index);
 			}
+			else if (match(TokenType::PLUS_PLUS) || match(TokenType::MINUS_MINUS)) {
+				Token op = previous();
+				if (auto var = std::dynamic_pointer_cast<VariableExpr>(expr)) {
+					expr = std::make_shared<PostfixExpr>(var->name, op);
+				}
+				else {
+					throw ParserError(op, "Invalid postfix target");
+				}
+			}
 			else {
 				break;
 			}
@@ -223,6 +249,7 @@ private:
 		if (match(TokenType::IF)) return ifStatement();
 		if (match(TokenType::WHILE)) return whileStatement();
 		if (match(TokenType::FOR)) return forStatement();
+		if (match(TokenType::PARALLEL)) return parallelForStatement();
 		if (match(TokenType::RETURN)) return returnStatement();
 		return expressionStatement();
 	}
@@ -290,6 +317,30 @@ private:
 		return std::make_shared<WhileStmt>(condition, body);
 	}
 
+	StmtPtr parallelForStatement() {
+		consume(TokenType::IDENTIFIER, "Expect variable name after 'parallel'");
+		std::string varName = previous().lexeme;
+
+		consume(TokenType::IN, "Expect 'in' after variable");
+
+		ExprPtr start = expression();
+		consume(TokenType::DOT, "Expect '..' in range");
+		consume(TokenType::DOT, "Expect '..' in range");
+		ExprPtr end = expression();
+
+		skipNewlines();
+
+		std::vector<StmtPtr> bodyStmts;
+		while (!check(TokenType::END) && !isAtEnd()) {
+			bodyStmts.push_back(declaration());
+			skipNewlines();
+		}
+		StmtPtr body = std::make_shared<BlockStmt>(bodyStmts);
+
+		consume(TokenType::END, "Expect 'end' after parallel body");
+		return std::make_shared<ParallelForStmt>(varName, start, end, body);
+	}
+
 	StmtPtr forStatement() {
 		consume(TokenType::LPAREN, "Expect '(' after 'for'");
 
@@ -298,7 +349,7 @@ private:
 		if (match(TokenType::SEMICOLON)) {
 			initializer = nullptr;
 		}
-		else if (match(TokenType::LET)) {
+		else if (match(TokenType::VAR)) {
 			Token name = consume(TokenType::IDENTIFIER, "Expect variable name");
 			ExprPtr initExpr = nullptr;
 			if (match(TokenType::EQUAL)) {
@@ -392,7 +443,7 @@ private:
 
 	StmtPtr declaration() {
 		try {
-			if (match(TokenType::LET)) {
+			if (match(TokenType::VAR)) {
 				Token name = consume(TokenType::IDENTIFIER, "Expect variable name");
 				ExprPtr initializer = nullptr;
 
@@ -411,18 +462,17 @@ private:
 			return statement();
 		}
 		catch (const ParserError& e) {
-			// Synchronize
 			while (!isAtEnd()) {
 				if (previous().type == TokenType::NEWLINE) break;
 				switch (peek().type) {
 				case TokenType::FUNC:
-				case TokenType::LET:
+				case TokenType::VAR:
 				case TokenType::FOR:
 				case TokenType::IF:
 				case TokenType::WHILE:
 				case TokenType::PRINT:
 				case TokenType::RETURN:
-					break;
+					return nullptr;
 				default:
 					advance();
 				}
