@@ -16,8 +16,6 @@ public:
 	Environment(std::shared_ptr<Environment> enc) : enclosing(enc) {}
 
 	void define(const std::string& name, const Value& value) {
-		// This defines a new variable in the *current* scope.
-		// It allows shadowing.
 		values[name] = value;
 	}
 

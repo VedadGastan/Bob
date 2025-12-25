@@ -119,12 +119,6 @@ public:
 	ExprStmt(ExprPtr expr) : expression(expr) {}
 };
 
-class PrintStmt : public Stmt {
-public:
-	ExprPtr expression;
-	PrintStmt(ExprPtr expr) : expression(expr) {}
-};
-
 class VarStmt : public Stmt {
 public:
 	std::string name;
@@ -157,14 +151,14 @@ public:
 	WhileStmt(ExprPtr cond, StmtPtr b) : condition(cond), body(b) {}
 };
 
-class ParallelForStmt : public Stmt {
+class ParallelStmt : public Stmt {
 public:
-	std::string varName;
-	ExprPtr start;
-	ExprPtr end;
+	StmtPtr initializer;
+	ExprPtr condition;
+	ExprPtr increment;
 	StmtPtr body;
-	ParallelForStmt(const std::string& var, ExprPtr s, ExprPtr e, StmtPtr b)
-		: varName(var), start(s), end(e), body(b) {
+	ParallelStmt(StmtPtr init, ExprPtr cond, ExprPtr inc, StmtPtr b)
+		: initializer(init), condition(cond), increment(inc), body(b) {
 	}
 };
 

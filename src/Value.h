@@ -19,8 +19,8 @@ public:
 	ValueType type;
 	bool boolValue;
 	double numberValue;
-	std::string stringValue;
-	std::vector<Value> arrayValue;
+	std::shared_ptr<std::string> stringValue;
+	std::shared_ptr<std::vector<Value>> arrayValue;
 	std::shared_ptr<Function> funcValue;
 
 	Value() : type(ValueType::NIL), boolValue(false), numberValue(0) {}
@@ -44,14 +44,14 @@ public:
 	static Value String(const std::string& s) {
 		Value v;
 		v.type = ValueType::STRING;
-		v.stringValue = s;
+		v.stringValue = std::make_shared<std::string>(s);
 		return v;
 	}
 
 	static Value Array(const std::vector<Value>& arr) {
 		Value v;
 		v.type = ValueType::ARRAY;
-		v.arrayValue = arr;
+		v.arrayValue = std::make_shared<std::vector<Value>>(arr);
 		return v;
 	}
 
@@ -62,14 +62,13 @@ public:
 		return v;
 	}
 
-
 	bool isTruthy() const {
 		switch (type) {
 		case ValueType::NIL: return false;
 		case ValueType::BOOL: return boolValue;
 		case ValueType::NUMBER: return numberValue != 0;
-		case ValueType::STRING: return !stringValue.empty();
-		case ValueType::ARRAY: return !arrayValue.empty();
+		case ValueType::STRING: return !stringValue->empty();
+		case ValueType::ARRAY: return !arrayValue->empty();
 		case ValueType::FUNCTION: return true;
 		default: return true;
 		}
@@ -78,32 +77,25 @@ public:
 	std::string toString() const {
 		std::stringstream ss;
 		switch (type) {
-			case ValueType::NIL:
-				return "nil";
-
-			case ValueType::BOOL:
-				return boolValue ? "true" : "false";
-
-			case ValueType::NUMBER:
-				ss << numberValue;
-				return ss.str();
-
-			case ValueType::STRING:
-				return stringValue;
-
-			case ValueType::ARRAY:
-				ss << "[";
-				for (size_t i = 0; i < arrayValue.size(); i++) {
-					if (i > 0) ss << ", ";
-					ss << arrayValue[i].toString();
-				}
-				ss << "]";
-				return ss.str();
-			case ValueType::FUNCTION:
-				return "<function>";
-			default:
-				return "unknown";
+		case ValueType::NIL: return "nil";
+		case ValueType::BOOL: return boolValue ? "true" : "false";
+		case ValueType::NUMBER: {
+			ss << numberValue;
+			return ss.str();
+		}
+		case ValueType::STRING: return *stringValue;
+		case ValueType::ARRAY: {
+			ss << "[";
+			for (size_t i = 0; i < arrayValue->size(); i++) {
+				if (i > 0) ss << ", ";
+				ss << (*arrayValue)[i].toString();
 			}
+			ss << "]";
+			return ss.str();
+		}
+		case ValueType::FUNCTION: return "<function>";
+		default: return "unknown";
+		}
 	}
 
 	bool isEqual(const Value& other) const {
@@ -112,11 +104,9 @@ public:
 		case ValueType::NIL: return true;
 		case ValueType::BOOL: return boolValue == other.boolValue;
 		case ValueType::NUMBER: return numberValue == other.numberValue;
-		case ValueType::STRING: return stringValue == other.stringValue;
-		case ValueType::ARRAY:
-			return arrayValue.size() == other.arrayValue.size();
-		case ValueType::FUNCTION:
-			return funcValue == other.funcValue;
+		case ValueType::STRING: return *stringValue == *other.stringValue;
+		case ValueType::ARRAY: return arrayValue->size() == other.arrayValue->size();
+		case ValueType::FUNCTION: return funcValue == other.funcValue;
 		default: return false;
 		}
 	}
@@ -124,7 +114,6 @@ public:
 	Value applyUnaryOp(TokenType opType) const;
 	Value applyBinaryOp(TokenType opType, const Value& other) const;
 };
-
 
 inline Value Value::applyUnaryOp(TokenType opType) const {
 	switch (opType) {
@@ -166,29 +155,29 @@ inline Value Value::applyBinaryOp(TokenType opType, const Value& other) const {
 		std::stringstream ss;
 		int count = static_cast<int>(other.numberValue);
 		for (int i = 0; i < count; ++i) {
-			ss << stringValue;
+			ss << *stringValue;
 		}
 		return Value::String(ss.str());
 	}
 
 	if (type == ValueType::STRING && opType == TokenType::PLUS) {
-		return Value::String(stringValue + other.toString());
+		return Value::String(*stringValue + other.toString());
 	}
 
 	if (type != ValueType::STRING && other.type == ValueType::STRING && opType == TokenType::PLUS) {
-		return Value::String(toString() + other.stringValue);
+		return Value::String(toString() + *other.stringValue);
 	}
 
 	if (type == ValueType::STRING && other.type == ValueType::STRING) {
-		if (opType == TokenType::EQUAL_EQUAL) return Value::Bool(stringValue == other.stringValue);
-		if (opType == TokenType::BANG_EQUAL) return Value::Bool(stringValue != other.stringValue);
+		if (opType == TokenType::EQUAL_EQUAL) return Value::Bool(*stringValue == *other.stringValue);
+		if (opType == TokenType::BANG_EQUAL) return Value::Bool(*stringValue != *other.stringValue);
 		if (opType == TokenType::IN)
-			return Value::Bool(other.stringValue.find(stringValue) != std::string::npos);
+			return Value::Bool(other.stringValue->find(*stringValue) != std::string::npos);
 		throw std::runtime_error("Unsupported string operation");
 	}
 
 	if (other.type == ValueType::ARRAY && opType == TokenType::IN) {
-		for (const auto& element : other.arrayValue) {
+		for (const auto& element : *other.arrayValue) {
 			if (this->isEqual(element)) {
 				return Value::Bool(true);
 			}
@@ -198,20 +187,20 @@ inline Value Value::applyBinaryOp(TokenType opType, const Value& other) const {
 
 	if (opType == TokenType::EQUAL_EQUAL) {
 		if (type == ValueType::STRING && other.type != ValueType::STRING) {
-			return Value::Bool(stringValue == other.toString());
+			return Value::Bool(*stringValue == other.toString());
 		}
 		if (type != ValueType::STRING && other.type == ValueType::STRING) {
-			return Value::Bool(toString() == other.stringValue);
+			return Value::Bool(toString() == *other.stringValue);
 		}
 		return Value::Bool(isEqual(other));
 	}
 
 	if (opType == TokenType::BANG_EQUAL) {
 		if (type == ValueType::STRING && other.type != ValueType::STRING) {
-			return Value::Bool(stringValue != other.toString());
+			return Value::Bool(*stringValue != other.toString());
 		}
 		if (type != ValueType::STRING && other.type == ValueType::STRING) {
-			return Value::Bool(toString() != other.stringValue);
+			return Value::Bool(toString() != *other.stringValue);
 		}
 		return Value::Bool(!isEqual(other));
 	}

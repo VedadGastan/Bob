@@ -245,106 +245,64 @@ private:
 	}
 
 	StmtPtr statement() {
-		if (match(TokenType::PRINT)) return printStatement();
 		if (match(TokenType::IF)) return ifStatement();
 		if (match(TokenType::WHILE)) return whileStatement();
 		if (match(TokenType::FOR)) return forStatement();
-		if (match(TokenType::PARALLEL)) return parallelForStatement();
+		if (match(TokenType::PARALLEL)) return parallelStatement();
 		if (match(TokenType::RETURN)) return returnStatement();
+		if (match(TokenType::LBRACE)) {
+			return std::make_shared<BlockStmt>(parseBlockBody());
+		}
 		return expressionStatement();
 	}
 
 	std::vector<StmtPtr> parseBlockBody() {
 		std::vector<StmtPtr> statements;
 		skipNewlines();
-		while (!check(TokenType::END) && !check(TokenType::ELSE) && !isAtEnd()) {
+		while (!check(TokenType::RBRACE) && !isAtEnd()) {
 			statements.push_back(declaration());
 			skipNewlines();
 		}
+		consume(TokenType::RBRACE, "Expect '}' after block");
 		return statements;
-	}
-
-	StmtPtr printStatement() {
-		ExprPtr value = expression();
-		skipNewlines();
-		return std::make_shared<PrintStmt>(value);
 	}
 
 	StmtPtr expressionStatement() {
 		ExprPtr expr = expression();
 		skipNewlines();
+		if (check(TokenType::SEMICOLON)) advance();
 		return std::make_shared<ExprStmt>(expr);
 	}
 
 	StmtPtr ifStatement() {
+		consume(TokenType::LPAREN, "Expect '(' after 'if'");
 		ExprPtr condition = expression();
-		skipNewlines();
+		consume(TokenType::RPAREN, "Expect ')' after if condition");
 
-		std::vector<StmtPtr> thenStmts;
-		while (!check(TokenType::ELSE) && !check(TokenType::END) && !isAtEnd()) {
-			thenStmts.push_back(declaration());
-			skipNewlines();
-		}
-		StmtPtr thenBranch = std::make_shared<BlockStmt>(thenStmts);
-
+		StmtPtr thenBranch = statement();
 		StmtPtr elseBranch = nullptr;
-		if (match(TokenType::ELSE)) {
-			skipNewlines();
-			std::vector<StmtPtr> elseStmts;
-			while (!check(TokenType::END) && !isAtEnd()) {
-				elseStmts.push_back(declaration());
-				skipNewlines();
-			}
-			elseBranch = std::make_shared<BlockStmt>(elseStmts);
+
+		if (match(TokenType::ELIF)) {
+			elseBranch = ifStatement();
+		}
+		else if (match(TokenType::ELSE)) {
+			elseBranch = statement();
 		}
 
-		consume(TokenType::END, "Expect 'end' after if statement");
 		return std::make_shared<IfStmt>(condition, thenBranch, elseBranch);
 	}
 
 	StmtPtr whileStatement() {
+		consume(TokenType::LPAREN, "Expect '(' after 'while'");
 		ExprPtr condition = expression();
-		skipNewlines();
-
-		std::vector<StmtPtr> bodyStmts;
-		while (!check(TokenType::END) && !isAtEnd()) {
-			bodyStmts.push_back(declaration());
-			skipNewlines();
-		}
-		StmtPtr body = std::make_shared<BlockStmt>(bodyStmts);
-
-		consume(TokenType::END, "Expect 'end' after while body");
+		consume(TokenType::RPAREN, "Expect ')' after while condition");
+		StmtPtr body = statement();
 		return std::make_shared<WhileStmt>(condition, body);
 	}
 
-	StmtPtr parallelForStatement() {
-		consume(TokenType::IDENTIFIER, "Expect variable name after 'parallel'");
-		std::string varName = previous().lexeme;
+	StmtPtr parallelStatement() {
+		consume(TokenType::LPAREN, "Expect '(' after 'parallel'");
 
-		consume(TokenType::IN, "Expect 'in' after variable");
-
-		ExprPtr start = expression();
-		consume(TokenType::DOT, "Expect '..' in range");
-		consume(TokenType::DOT, "Expect '..' in range");
-		ExprPtr end = expression();
-
-		skipNewlines();
-
-		std::vector<StmtPtr> bodyStmts;
-		while (!check(TokenType::END) && !isAtEnd()) {
-			bodyStmts.push_back(declaration());
-			skipNewlines();
-		}
-		StmtPtr body = std::make_shared<BlockStmt>(bodyStmts);
-
-		consume(TokenType::END, "Expect 'end' after parallel body");
-		return std::make_shared<ParallelForStmt>(varName, start, end, body);
-	}
-
-	StmtPtr forStatement() {
-		consume(TokenType::LPAREN, "Expect '(' after 'for'");
-
-		// 1. Initializer
 		StmtPtr initializer;
 		if (match(TokenType::SEMICOLON)) {
 			initializer = nullptr;
@@ -363,34 +321,69 @@ private:
 			consume(TokenType::SEMICOLON, "Expect ';' after loop initializer");
 		}
 
-		// 2. Condition
 		ExprPtr condition = nullptr;
 		if (!check(TokenType::SEMICOLON)) {
 			condition = expression();
 		}
 		consume(TokenType::SEMICOLON, "Expect ';' after loop condition");
 
-		// 3. Increment
+		ExprPtr increment = nullptr;
+		if (!check(TokenType::RPAREN)) {
+			increment = expression();
+		}
+		consume(TokenType::RPAREN, "Expect ')' after clauses");
+
+		StmtPtr body = statement();
+
+		return std::make_shared<ParallelStmt>(initializer, condition, increment, body);
+	}
+
+	StmtPtr forStatement() {
+		consume(TokenType::LPAREN, "Expect '(' after 'for'");
+
+		StmtPtr initializer;
+		if (match(TokenType::SEMICOLON)) {
+			initializer = nullptr;
+		}
+		else if (match(TokenType::VAR)) {
+			Token name = consume(TokenType::IDENTIFIER, "Expect variable name");
+			ExprPtr initExpr = nullptr;
+			if (match(TokenType::EQUAL)) {
+				initExpr = expression();
+			}
+			initializer = std::make_shared<VarStmt>(name.lexeme, initExpr);
+			consume(TokenType::SEMICOLON, "Expect ';' after loop initializer");
+		}
+		else {
+			initializer = std::make_shared<ExprStmt>(expression());
+			consume(TokenType::SEMICOLON, "Expect ';' after loop initializer");
+		}
+
+		ExprPtr condition = nullptr;
+		if (!check(TokenType::SEMICOLON)) {
+			condition = expression();
+		}
+		consume(TokenType::SEMICOLON, "Expect ';' after loop condition");
+
 		ExprPtr increment = nullptr;
 		if (!check(TokenType::RPAREN)) {
 			increment = expression();
 		}
 		consume(TokenType::RPAREN, "Expect ')' after for clauses");
-		skipNewlines();
 
-		// 4. Body
-		std::vector<StmtPtr> bodyStmts;
-		while (!check(TokenType::END) && !isAtEnd()) {
-			bodyStmts.push_back(declaration());
-			skipNewlines();
-		}
-		consume(TokenType::END, "Expect 'end' after for body");
+		StmtPtr body = statement();
 
-		// 5. Desugar
 		if (increment != nullptr) {
+			std::vector<StmtPtr> bodyStmts;
+			if (auto block = std::dynamic_pointer_cast<BlockStmt>(body)) {
+				bodyStmts = block->statements;
+			}
+			else {
+				bodyStmts.push_back(body);
+			}
 			bodyStmts.push_back(std::make_shared<ExprStmt>(increment));
+			body = std::make_shared<BlockStmt>(bodyStmts);
 		}
-		StmtPtr body = std::make_shared<BlockStmt>(bodyStmts);
 
 		if (condition == nullptr) {
 			condition = std::make_shared<LiteralExpr>(Value::Bool(true));
@@ -420,24 +413,19 @@ private:
 		}
 
 		consume(TokenType::RPAREN, "Expect ')' after parameters");
-		skipNewlines();
 
-		std::vector<StmtPtr> body;
-		while (!check(TokenType::END) && !isAtEnd()) {
-			body.push_back(declaration());
-			skipNewlines();
-		}
+		consume(TokenType::LBRACE, "Expect '{' before function body");
+		std::vector<StmtPtr> body = parseBlockBody();
 
-		consume(TokenType::END, "Expect 'end' after function body");
 		return std::make_shared<FunctionStmt>(name.lexeme, params, body);
 	}
 
 	StmtPtr returnStatement() {
 		ExprPtr value = nullptr;
-		if (!check(TokenType::NEWLINE) && !check(TokenType::END) && !isAtEnd()) {
+		if (!check(TokenType::SEMICOLON) && !check(TokenType::NEWLINE) && !check(TokenType::RBRACE)) {
 			value = expression();
 		}
-		skipNewlines();
+		if (check(TokenType::SEMICOLON)) advance();
 		return std::make_shared<ReturnStmt>(value);
 	}
 
@@ -451,7 +439,7 @@ private:
 					initializer = expression();
 				}
 
-				skipNewlines();
+				if (check(TokenType::SEMICOLON)) advance();
 				return std::make_shared<VarStmt>(name.lexeme, initializer);
 			}
 
@@ -463,14 +451,13 @@ private:
 		}
 		catch (const ParserError& e) {
 			while (!isAtEnd()) {
-				if (previous().type == TokenType::NEWLINE) break;
+				if (previous().type == TokenType::NEWLINE || previous().type == TokenType::SEMICOLON) break;
 				switch (peek().type) {
 				case TokenType::FUNC:
 				case TokenType::VAR:
 				case TokenType::FOR:
 				case TokenType::IF:
 				case TokenType::WHILE:
-				case TokenType::PRINT:
 				case TokenType::RETURN:
 					return nullptr;
 				default:

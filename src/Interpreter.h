@@ -16,6 +16,9 @@
 #include <thread>
 #include <mutex>
 #include <future>
+#include <atomic>
+#include <chrono>
+#include <random>
 
 class RuntimeError : public std::runtime_error {
 public:
@@ -41,7 +44,6 @@ private:
 	static std::mutex atomicMutex;
 	int numThreads;
 
-	// Helper for builtins
 	void defineBuiltin(const std::string& name,
 		std::function<Value(const std::vector<Value>&)> func) {
 		builtins[name] = func;
@@ -75,10 +77,10 @@ private:
 			}
 			const auto& arg = args[0];
 			if (arg.type == ValueType::ARRAY) {
-				return Value::Number(static_cast<double>(arg.arrayValue.size()));
+				return Value::Number(static_cast<double>(arg.arrayValue->size()));
 			}
 			else if (arg.type == ValueType::STRING) {
-				return Value::Number(static_cast<double>(arg.stringValue.size()));
+				return Value::Number(static_cast<double>(arg.stringValue->size()));
 			}
 			throw RuntimeError("len() expects array or string");
 			});
@@ -114,6 +116,24 @@ private:
 			return Value::Number(std::abs(args[0].numberValue));
 			});
 
+		defineBuiltin("floor", [](const std::vector<Value>& args) -> Value {
+			if (args.size() != 1) throw RuntimeError("floor() expects 1 argument");
+			if (args[0].type != ValueType::NUMBER) throw RuntimeError("floor() expects a number");
+			return Value::Number(std::floor(args[0].numberValue));
+			});
+
+		defineBuiltin("ceil", [](const std::vector<Value>& args) -> Value {
+			if (args.size() != 1) throw RuntimeError("ceil() expects 1 argument");
+			if (args[0].type != ValueType::NUMBER) throw RuntimeError("ceil() expects a number");
+			return Value::Number(std::ceil(args[0].numberValue));
+			});
+
+		defineBuiltin("round", [](const std::vector<Value>& args) -> Value {
+			if (args.size() != 1) throw RuntimeError("round() expects 1 argument");
+			if (args[0].type != ValueType::NUMBER) throw RuntimeError("round() expects a number");
+			return Value::Number(std::round(args[0].numberValue));
+			});
+
 		defineBuiltin("sin", [](const std::vector<Value>& args) -> Value {
 			if (args.size() != 1) throw RuntimeError("sin() expects 1 argument");
 			if (args[0].type != ValueType::NUMBER) throw RuntimeError("sin() expects a number");
@@ -132,181 +152,141 @@ private:
 			return Value::Number(std::tan(args[0].numberValue));
 			});
 
-		defineBuiltin("floor", [](const std::vector<Value>& args) -> Value {
-			if (args.size() != 1) throw RuntimeError("floor() expects 1 argument");
-			if (args[0].type != ValueType::NUMBER) throw RuntimeError("floor() expects a number");
-			return Value::Number(std::floor(args[0].numberValue));
+		defineBuiltin("log", [](const std::vector<Value>& args) -> Value {
+			if (args.size() != 1) throw RuntimeError("log() expects 1 argument");
+			if (args[0].type != ValueType::NUMBER) throw RuntimeError("log() expects a number");
+			return Value::Number(std::log(args[0].numberValue));
 			});
 
-		defineBuiltin("ceil", [](const std::vector<Value>& args) -> Value {
-			if (args.size() != 1) throw RuntimeError("ceil() expects 1 argument");
-			if (args[0].type != ValueType::NUMBER) throw RuntimeError("ceil() expects a number");
-			return Value::Number(std::ceil(args[0].numberValue));
+		defineBuiltin("random", [](const std::vector<Value>&) -> Value {
+			static std::random_device rd;
+			static std::mt19937 gen(rd());
+			static std::uniform_real_distribution<> dis(0.0, 1.0);
+			return Value::Number(dis(gen));
 			});
 
-		defineBuiltin("thread_id", [this](const std::vector<Value>& args) -> Value {
-			if (args.size() != 0) {
-				throw RuntimeError("thread_id() expects 0 arguments");
-			}
+		defineBuiltin("time", [](const std::vector<Value>&) -> Value {
+			auto now = std::chrono::system_clock::now();
+			auto duration = now.time_since_epoch();
+			double millis = static_cast<double>(std::chrono::duration_cast<std::chrono::milliseconds>(duration).count());
+			return Value::Number(millis);
+			});
+
+		defineBuiltin("thread_id", [this](const std::vector<Value>&) -> Value {
 			std::stringstream ss;
 			ss << std::this_thread::get_id();
 			return Value::String(ss.str());
 			});
 
-		defineBuiltin("num_threads", [this](const std::vector<Value>& args) -> Value {
-			if (args.size() != 0) {
-				throw RuntimeError("num_threads() expects 0 arguments");
-			}
-			return Value::Number(numThreads);
+		defineBuiltin("num_threads", [this](const std::vector<Value>&) -> Value {
+			return Value::Number(static_cast<double>(numThreads));
 			});
 
 		defineBuiltin("sleep", [](const std::vector<Value>& args) -> Value {
-			if (args.size() != 1) {
-				throw RuntimeError("sleep() expects 1 argument");
-			}
-			if (args[0].type != ValueType::NUMBER) {
-				throw RuntimeError("sleep() expects a number");
+			if (args.size() != 1 || args[0].type != ValueType::NUMBER) {
+				throw RuntimeError("sleep() expects 1 number argument (ms)");
 			}
 			int ms = static_cast<int>(args[0].numberValue);
 			std::this_thread::sleep_for(std::chrono::milliseconds(ms));
 			return Value::Nil();
 			});
 
-		defineBuiltin("atomic_add", [this](const std::vector<Value>& args) -> Value {
-			if (args.size() != 2) {
-				throw RuntimeError("atomic_add() expects 2 arguments (var_name, value)");
-			}
-			if (args[0].type != ValueType::STRING) {
-				throw RuntimeError("atomic_add() first argument must be variable name as string");
-			}
-			if (args[1].type != ValueType::NUMBER) {
-				throw RuntimeError("atomic_add() second argument must be a number");
-			}
-
-			std::string varName = args[0].stringValue;
-			double addValue = args[1].numberValue;
-
+		defineBuiltin("atomic_store", [this](const std::vector<Value>& args) -> Value {
+			if (args.size() != 2) throw RuntimeError("atomic_store(var_name, val)");
+			std::string varName = *args[0].stringValue;
+			double val = args[1].numberValue;
 			std::lock_guard<std::mutex> lock(atomicMutex);
+			atomicVars[varName] = val;
+			globals->define(varName, Value::Number(val));
+			return Value::Nil();
+			});
 
-			auto it = atomicVars.find(varName);
-			if (it == atomicVars.end()) {
-				try {
-					Value current = globals->get(varName);
-					if (current.type != ValueType::NUMBER) {
-						throw RuntimeError("atomic_add() can only add to numbers");
-					}
-					atomicVars[varName] = current.numberValue + addValue;
-				}
-				catch (const std::runtime_error&) {
-					atomicVars[varName] = addValue;
-				}
-			}
-			else {
-				atomicVars[varName] += addValue;
-			}
+		defineBuiltin("atomic_load", [this](const std::vector<Value>& args) -> Value {
+			if (args.size() != 1) throw RuntimeError("atomic_load(var_name)");
+			std::string varName = *args[0].stringValue;
+			std::lock_guard<std::mutex> lock(atomicMutex);
+			if (atomicVars.find(varName) == atomicVars.end()) return Value::Number(0);
+			return Value::Number(atomicVars[varName]);
+			});
 
+		defineBuiltin("atomic_add", [this](const std::vector<Value>& args) -> Value {
+			if (args.size() != 2) throw RuntimeError("atomic_add(var_name, val)");
+			std::string varName = *args[0].stringValue;
+			double val = args[1].numberValue;
+			std::lock_guard<std::mutex> lock(atomicMutex);
+			atomicVars[varName] += val;
 			globals->assign(varName, Value::Number(atomicVars[varName]));
+			return Value::Number(atomicVars[varName]);
+			});
+
+		defineBuiltin("atomic_sub", [this](const std::vector<Value>& args) -> Value {
+			if (args.size() != 2) throw RuntimeError("atomic_sub(var_name, val)");
+			std::string varName = *args[0].stringValue;
+			double val = args[1].numberValue;
+			std::lock_guard<std::mutex> lock(atomicMutex);
+			atomicVars[varName] -= val;
+			globals->assign(varName, Value::Number(atomicVars[varName]));
+			return Value::Number(atomicVars[varName]);
+			});
+
+		defineBuiltin("atomic_inc", [this](const std::vector<Value>& args) -> Value {
+			if (args.size() != 1) throw RuntimeError("atomic_inc(var_name)");
+			std::string varName = *args[0].stringValue;
+			std::lock_guard<std::mutex> lock(atomicMutex);
+			atomicVars[varName] += 1.0;
+			globals->assign(varName, Value::Number(atomicVars[varName]));
+			return Value::Number(atomicVars[varName]);
+			});
+
+		defineBuiltin("atomic_dec", [this](const std::vector<Value>& args) -> Value {
+			if (args.size() != 1) throw RuntimeError("atomic_dec(var_name)");
+			std::string varName = *args[0].stringValue;
+			std::lock_guard<std::mutex> lock(atomicMutex);
+			atomicVars[varName] -= 1.0;
+			globals->assign(varName, Value::Number(atomicVars[varName]));
+			return Value::Number(atomicVars[varName]);
+			});
+
+		defineBuiltin("atomic_xchg", [this](const std::vector<Value>& args) -> Value {
+			if (args.size() != 2) throw RuntimeError("atomic_xchg(var_name, new_val)");
+			std::string varName = *args[0].stringValue;
+			double newVal = args[1].numberValue;
+			std::lock_guard<std::mutex> lock(atomicMutex);
+			double oldVal = atomicVars[varName];
+			atomicVars[varName] = newVal;
+			globals->assign(varName, Value::Number(newVal));
+			return Value::Number(oldVal);
+			});
+
+		defineBuiltin("atomic_cas", [this](const std::vector<Value>& args) -> Value {
+			if (args.size() != 3) throw RuntimeError("atomic_cas(var_name, expected, new_val)");
+			std::string varName = *args[0].stringValue;
+			double expected = args[1].numberValue;
+			double newVal = args[2].numberValue;
+			std::lock_guard<std::mutex> lock(atomicMutex);
+			if (atomicVars[varName] == expected) {
+				atomicVars[varName] = newVal;
+				globals->assign(varName, Value::Number(newVal));
+				return Value::Bool(true);
+			}
+			return Value::Bool(false);
+			});
+		defineBuiltin("push", [](const std::vector<Value>& args) -> Value {
+			if (args.size() != 2) throw RuntimeError("push() expects 2 arguments: array and value");
+			if (args[0].type != ValueType::ARRAY) throw RuntimeError("First argument must be an array");
+
+			args[0].arrayValue->push_back(args[1]);
 			return Value::Nil();
 			});
 
-		defineBuiltin("range", [](const std::vector<Value>& args) -> Value {
-			if (args.size() != 2) {
-				throw RuntimeError("range() expects 2 arguments");
-			}
-			if (args[0].type != ValueType::NUMBER || args[1].type != ValueType::NUMBER) {
-				throw RuntimeError("range() expects number arguments");
-			}
-			std::vector<Value> result;
-			int start = static_cast<int>(args[0].numberValue);
-			int end = static_cast<int>(args[1].numberValue);
-			for (int i = start; i < end; i++) {
-				result.push_back(Value::Number(i));
-			}
-			return Value::Array(result);
-			});
+		defineBuiltin("pop", [](const std::vector<Value>& args) -> Value {
+			if (args.size() != 1) throw RuntimeError("pop() expects 1 argument: array");
+			if (args[0].type != ValueType::ARRAY) throw RuntimeError("Argument must be an array");
+			if (args[0].arrayValue->empty()) throw RuntimeError("Cannot pop from empty array");
 
-		defineBuiltin("print", [](const std::vector<Value>& args) -> Value {
-			for (size_t i = 0; i < args.size(); i++) {
-				if (i > 0) std::cout << " ";
-				std::cout << args[i].toString();
-			}
-			std::cout << std::endl;
-			return Value::Nil();
-			});
-
-		defineBuiltin("len", [](const std::vector<Value>& args) -> Value {
-			if (args.size() != 1) {
-				throw RuntimeError("len() expects exactly 1 argument");
-			}
-			const auto& arg = args[0];
-			if (arg.type == ValueType::ARRAY) {
-				return Value::Number(static_cast<double>(arg.arrayValue.size()));
-			}
-			else if (arg.type == ValueType::STRING) {
-				return Value::Number(static_cast<double>(arg.stringValue.size()));
-			}
-			throw RuntimeError("len() expects array or string");
-			});
-
-		defineBuiltin("input", [](const std::vector<Value>& args) -> Value {
-			if (args.size() > 1) {
-				throw RuntimeError("input() expects 0 or 1 arguments");
-			}
-			if (!args.empty()) {
-				std::cout << args[0].toString();
-			}
-			std::string input;
-			std::getline(std::cin, input);
-			return Value::String(input);
-			});
-
-		defineBuiltin("sqrt", [](const std::vector<Value>& args) -> Value {
-			if (args.size() != 1) throw RuntimeError("sqrt() expects 1 argument");
-			if (args[0].type != ValueType::NUMBER) throw RuntimeError("sqrt() expects a number");
-			return Value::Number(std::sqrt(args[0].numberValue));
-			});
-
-		defineBuiltin("pow", [](const std::vector<Value>& args) -> Value {
-			if (args.size() != 2) throw RuntimeError("pow() expects 2 arguments");
-			if (args[0].type != ValueType::NUMBER) throw RuntimeError("pow() expects numbers");
-			if (args[1].type != ValueType::NUMBER) throw RuntimeError("pow() expects numbers");
-			return Value::Number(std::pow(args[0].numberValue, args[1].numberValue));
-			});
-
-		defineBuiltin("abs", [](const std::vector<Value>& args) -> Value {
-			if (args.size() != 1) throw RuntimeError("abs() expects 1 argument");
-			if (args[0].type != ValueType::NUMBER) throw RuntimeError("abs() expects a number");
-			return Value::Number(std::abs(args[0].numberValue));
-			});
-
-		defineBuiltin("sin", [](const std::vector<Value>& args) -> Value {
-			if (args.size() != 1) throw RuntimeError("sin() expects 1 argument");
-			if (args[0].type != ValueType::NUMBER) throw RuntimeError("sin() expects a number");
-			return Value::Number(std::sin(args[0].numberValue));
-			});
-
-		defineBuiltin("cos", [](const std::vector<Value>& args) -> Value {
-			if (args.size() != 1) throw RuntimeError("cos() expects 1 argument");
-			if (args[0].type != ValueType::NUMBER) throw RuntimeError("cos() expects a number");
-			return Value::Number(std::cos(args[0].numberValue));
-			});
-
-		defineBuiltin("tan", [](const std::vector<Value>& args) -> Value {
-			if (args.size() != 1) throw RuntimeError("tan() expects 1 argument");
-			if (args[0].type != ValueType::NUMBER) throw RuntimeError("tan() expects a number");
-			return Value::Number(std::tan(args[0].numberValue));
-			});
-
-		defineBuiltin("floor", [](const std::vector<Value>& args) -> Value {
-			if (args.size() != 1) throw RuntimeError("floor() expects 1 argument");
-			if (args[0].type != ValueType::NUMBER) throw RuntimeError("floor() expects a number");
-			return Value::Number(std::floor(args[0].numberValue));
-			});
-
-		defineBuiltin("ceil", [](const std::vector<Value>& args) -> Value {
-			if (args.size() != 1) throw RuntimeError("ceil() expects 1 argument");
-			if (args[0].type != ValueType::NUMBER) throw RuntimeError("ceil() expects a number");
-			return Value::Number(std::ceil(args[0].numberValue));
+			Value val = args[0].arrayValue->back();
+			args[0].arrayValue->pop_back();
+			return val;
 			});
 	}
 
@@ -333,17 +313,6 @@ private:
 			}
 			catch (const std::runtime_error& e) {
 				throw RuntimeError("Cannot assign to undefined variable '" + assign->name + "'");
-			}
-			return val;
-		}
-
-		if (auto assign = std::dynamic_pointer_cast<AssignmentExpr>(expr)) {
-			Value val = evaluateExpr(assign->value);
-			try {
-				environment->assign(assign->name, val);
-			}
-			catch (const std::runtime_error& e) {
-				throw RuntimeError(e.what());
 			}
 			return val;
 		}
@@ -456,24 +425,35 @@ private:
 			Value arrayVal = evaluateExpr(index->array);
 			Value idxVal = evaluateExpr(index->index);
 
-			if (arrayVal.type != ValueType::ARRAY) {
-				throw RuntimeError("Cannot index non-array value, got " + arrayVal.toString());
-			}
 			if (idxVal.type != ValueType::NUMBER) {
-				throw RuntimeError("Array index must be a number, got " + idxVal.toString());
+				throw RuntimeError("Index must be a number");
 			}
 
 			int i = static_cast<int>(idxVal.numberValue);
-			int size = static_cast<int>(arrayVal.arrayValue.size());
+
+			if (arrayVal.type == ValueType::STRING) {
+				int size = static_cast<int>(arrayVal.stringValue->size());
+				if (i < 0) i = size + i;
+				if (i < 0 || i >= size) {
+					throw RuntimeError("String index out of bounds");
+				}
+				return Value::String(std::string(1, arrayVal.stringValue->at(i)));
+			}
+
+			if (arrayVal.type != ValueType::ARRAY) {
+				throw RuntimeError("Cannot index non-array/string value");
+			}
+
+			int size = static_cast<int>(arrayVal.arrayValue->size());
 
 			if (i < 0) {
 				i = size + i;
 			}
 
 			if (i < 0 || i >= size) {
-				throw RuntimeError("Array index " + std::to_string(i) + " out of bounds for array of size " + std::to_string(size));
+				throw RuntimeError("Array index out of bounds");
 			}
-			return arrayVal.arrayValue[i];
+			return (*arrayVal.arrayValue)[i];
 		}
 
 		if (auto indexAssign = std::dynamic_pointer_cast<IndexAssignExpr>(expr)) {
@@ -481,34 +461,31 @@ private:
 			Value idxVal = evaluateExpr(indexAssign->index);
 			Value newVal = evaluateExpr(indexAssign->value);
 
-			if (arrayVal.type != ValueType::ARRAY) {
-				throw RuntimeError("Cannot index assign to non-array value");
-			}
 			if (idxVal.type != ValueType::NUMBER) {
-				throw RuntimeError("Array index must be a number");
+				throw RuntimeError("Index must be a number");
 			}
 
 			int i = static_cast<int>(idxVal.numberValue);
-			int size = static_cast<int>(arrayVal.arrayValue.size());
 
-			if (i < 0) {
-				i = size + i;
+			if (arrayVal.type == ValueType::STRING) {
+				int size = static_cast<int>(arrayVal.stringValue->size());
+				if (i < 0) i = size + i;
+				if (i < 0 || i >= size) throw RuntimeError("String index out of bounds");
+
+				(*arrayVal.stringValue)[i] = newVal.toString()[0];
+				return newVal;
 			}
 
-			if (i < 0 || i >= size) {
-				throw RuntimeError("Array index " + std::to_string(i) + " out of bounds for array of size " + std::to_string(size));
+			if (arrayVal.type != ValueType::ARRAY) {
+				throw RuntimeError("Cannot index assign to non-array value");
 			}
 
-			arrayVal.arrayValue[i] = newVal;
+			int size = static_cast<int>(arrayVal.arrayValue->size());
 
-			if (auto var = std::dynamic_pointer_cast<VariableExpr>(indexAssign->array)) {
-				try {
-					environment->assign(var->name, arrayVal);
-				}
-				catch (const std::runtime_error& e) {
-					throw RuntimeError("Cannot assign to undefined variable '" + var->name + "'");
-				}
-			}
+			if (i < 0) i = size + i;
+			if (i < 0 || i >= size) throw RuntimeError("Array index out of bounds");
+
+			(*arrayVal.arrayValue)[i] = newVal;
 
 			return newVal;
 		}
@@ -523,15 +500,7 @@ private:
 			if (auto var = std::dynamic_pointer_cast<VariableExpr>(call->callee)) {
 				auto it = builtins.find(var->name);
 				if (it != builtins.end()) {
-					try {
-						return it->second(args);
-					}
-					catch (const RuntimeError& e) {
-						throw;
-					}
-					catch (const std::runtime_error& e) {
-						throw RuntimeError(std::string(e.what()));
-					}
+					return it->second(args);
 				}
 			}
 
@@ -543,8 +512,7 @@ private:
 
 			auto& func = calleeValue.funcValue;
 			if (func->params.size() != args.size()) {
-				throw RuntimeError("Function expects " + std::to_string(func->params.size()) +
-					" argument(s), but got " + std::to_string(args.size()));
+				throw RuntimeError("Function argument count mismatch");
 			}
 
 			auto callEnv = std::make_shared<Environment>(func->closure);
@@ -596,12 +564,6 @@ private:
 			return;
 		}
 
-		if (auto printStmt = std::dynamic_pointer_cast<PrintStmt>(stmt)) {
-			Value value = evaluateExpr(printStmt->expression);
-			std::cout << value.toString() << std::endl;
-			return;
-		}
-
 		if (auto varStmt = std::dynamic_pointer_cast<VarStmt>(stmt)) {
 			Value value = Value::Nil();
 			if (varStmt->initializer) {
@@ -636,93 +598,126 @@ private:
 			return;
 		}
 
-		if (auto parallelStmt = std::dynamic_pointer_cast<ParallelForStmt>(stmt)) {
-			Value startVal = evaluateExpr(parallelStmt->start);
-			Value endVal = evaluateExpr(parallelStmt->end);
+		if (auto parallelStmt = std::dynamic_pointer_cast<ParallelStmt>(stmt)) {
+			std::string varName = "";
+			double startVal = 0;
+			double endVal = 0;
+			double stepVal = 1;
+			bool validRange = false;
 
-			if (startVal.type != ValueType::NUMBER || endVal.type != ValueType::NUMBER) {
-				throw RuntimeError("Parallel range bounds must be numbers");
-			}
+			auto prevEnv = environment;
+			auto loopEnv = std::make_shared<Environment>(environment);
+			environment = loopEnv;
 
-			int start = static_cast<int>(startVal.numberValue);
-			int end = static_cast<int>(endVal.numberValue);
-			int range = end - start;
-
-			if (range <= 0) return;
-
-			if (range < 50) {
-				for (int i = start; i < end; i++) {
-					auto loopEnv = std::make_shared<Environment>(environment);
-					loopEnv->define(parallelStmt->varName, Value::Number(i));
-					executeBlock({ parallelStmt->body }, loopEnv);
+			if (parallelStmt->initializer) {
+				executeStmt(parallelStmt->initializer);
+				if (auto varStmt = std::dynamic_pointer_cast<VarStmt>(parallelStmt->initializer)) {
+					varName = varStmt->name;
+					Value v = environment->get(varName);
+					if (v.type == ValueType::NUMBER) {
+						startVal = v.numberValue;
+					}
 				}
-				return;
 			}
 
-			int actualThreads = std::min(numThreads, 12);
-			int chunkSize = (range + actualThreads - 1) / actualThreads;
+			if (varName.empty()) {
+				throw RuntimeError("Parallel for requires a variable initializer");
+			}
 
-			std::vector<std::thread> threads;
-			std::atomic<bool> hasError{ false };
-			std::string errorMsg;
-			std::mutex errorMutex;
+			if (auto bin = std::dynamic_pointer_cast<BinaryExpr>(parallelStmt->condition)) {
+				if (bin->op.type == TokenType::LESS || bin->op.type == TokenType::LESS_EQUAL) {
+					Value r = evaluateExpr(bin->right);
+					if (r.type == ValueType::NUMBER) {
+						endVal = r.numberValue;
+						if (bin->op.type == TokenType::LESS_EQUAL) endVal += 1;
+						validRange = true;
+					}
+				}
+			}
 
-			auto sharedGlobals = globals;
-			auto sharedEnv = environment;
-			auto sharedBuiltins = builtins;
-			auto bodyStmt = parallelStmt->body;
-			auto varName = parallelStmt->varName;
+			if (auto post = std::dynamic_pointer_cast<PostfixExpr>(parallelStmt->increment)) {
+				if (post->op.type == TokenType::PLUS_PLUS) stepVal = 1;
+				else if (post->op.type == TokenType::MINUS_MINUS) stepVal = -1;
+			}
+			else if (auto assign = std::dynamic_pointer_cast<CompoundAssignExpr>(parallelStmt->increment)) {
+				Value v = evaluateExpr(assign->value);
+				if (v.type == ValueType::NUMBER) {
+					if (assign->op.type == TokenType::PLUS_EQUAL) stepVal = v.numberValue;
+					if (assign->op.type == TokenType::MINUS_EQUAL) stepVal = -v.numberValue;
+				}
+			}
 
-			for (int t = 0; t < actualThreads; t++) {
-				int threadStart = start + t * chunkSize;
-				int threadEnd = std::min(threadStart + chunkSize, end);
+			environment = prevEnv;
 
-				if (threadStart >= threadEnd) continue;
+			if (validRange && stepVal != 0) {
+				int totalOps = static_cast<int>((endVal - startVal) / stepVal);
 
-				threads.emplace_back([this, sharedGlobals, sharedEnv, sharedBuiltins, bodyStmt, varName,
-					threadStart, threadEnd, &hasError, &errorMsg, &errorMutex]() {
+				if (totalOps <= 0 || totalOps < 20) {
+					auto seqEnv = std::make_shared<Environment>(environment);
+					environment = seqEnv;
+					executeStmt(parallelStmt->initializer);
+					while (evaluateExpr(parallelStmt->condition).isTruthy()) {
+						executeStmt(parallelStmt->body);
+						evaluateExpr(parallelStmt->increment);
+					}
+					environment = prevEnv;
+					return;
+				}
+
+				int actualThreads = std::min(numThreads, totalOps);
+				std::vector<std::thread> threads;
+				std::atomic<bool> hasError{ false };
+				std::string errorMsg;
+				std::mutex errorMutex;
+
+				auto sharedGlobals = globals;
+				auto sharedEnv = environment;
+				auto sharedBuiltins = builtins;
+				auto bodyStmt = parallelStmt->body;
+				auto condExpr = parallelStmt->condition;
+				auto incExpr = parallelStmt->increment;
+
+				std::atomic<int> sharedCounter{ 0 };
+
+				for (int t = 0; t < actualThreads; t++) {
+					threads.emplace_back([=, &sharedCounter, &hasError, &errorMsg, &errorMutex]() {
 						try {
 							Interpreter threadInterp;
 							threadInterp.globals = sharedGlobals;
-							threadInterp.environment = sharedEnv;
+							threadInterp.environment = std::make_shared<Environment>(sharedEnv);
 							threadInterp.builtins = sharedBuiltins;
-							threadInterp.numThreads = this->numThreads;
 
-							for (int i = threadStart; i < threadEnd; i++) {
-								auto loopEnv = std::make_shared<Environment>(sharedEnv);
-								loopEnv->define(varName, Value::Number(i));
+							while (!hasError) {
+								int idx = sharedCounter.fetch_add(1);
+								double currentI = startVal + (idx * stepVal);
 
-								if (auto block = std::dynamic_pointer_cast<BlockStmt>(bodyStmt)) {
-									threadInterp.executeBlock(block->statements, loopEnv);
-								}
-								else {
-									auto saved = threadInterp.environment;
-									threadInterp.environment = loopEnv;
-									threadInterp.executeStmt(bodyStmt);
-									threadInterp.environment = saved;
-								}
+								bool stillRunning = false;
+								if (stepVal > 0) stillRunning = (currentI < endVal);
+								else stillRunning = (currentI > endVal);
+
+								if (!stillRunning) break;
+
+								auto iterEnv = std::make_shared<Environment>(sharedEnv);
+								iterEnv->define(varName, Value::Number(currentI));
+								threadInterp.environment = iterEnv;
+
+								threadInterp.executeStmt(bodyStmt);
 							}
 						}
 						catch (const std::exception& e) {
 							std::lock_guard<std::mutex> lock(errorMutex);
-							if (!hasError) {
-								hasError = true;
-								errorMsg = e.what();
-							}
+							hasError = true;
+							errorMsg = e.what();
 						}
-					});
-			}
-
-			for (auto& thread : threads) {
-				if (thread.joinable()) {
-					thread.join();
+						});
 				}
-			}
 
-			if (hasError) {
-				throw RuntimeError(errorMsg);
+				for (auto& th : threads) if (th.joinable()) th.join();
+				if (hasError) throw RuntimeError(errorMsg);
 			}
-
+			else {
+				throw RuntimeError("Parallel loop too complex for automatic parallelization. Use simple numeric ranges.");
+			}
 			return;
 		}
 

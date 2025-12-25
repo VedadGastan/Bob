@@ -7,8 +7,8 @@
 enum class TokenType {
 	NUMBER, STRING, TRUE, FALSE, NIL,
 	IDENTIFIER,
-	VAR, FUNC, IF, ELSE, WHILE, FOR, RETURN, BREAK, CONTINUE,
-	PRINT, IN, AND, OR, NOT,
+	VAR, FUNC, IF, ELIF, ELSE, WHILE, FOR, RETURN, BREAK, CONTINUE,
+	IN, AND, OR, NOT,
 	PARALLEL, ASYNC, AWAIT,
 
 	PLUS, MINUS, STAR, SLASH, PERCENT,
@@ -19,10 +19,9 @@ enum class TokenType {
 	EQUAL, EQUAL_EQUAL, BANG_EQUAL,
 	LESS, LESS_EQUAL, GREATER, GREATER_EQUAL,
 	DOT, ARROW,
-	LPAREN, RPAREN, LBRACKET, RBRACKET,
+	LPAREN, RPAREN, LBRACKET, RBRACKET, LBRACE, RBRACE,
 	COMMA, COLON, SEMICOLON, NEWLINE,
 
-	END,
 	END_OF_FILE, INVALID
 };
 
@@ -40,13 +39,13 @@ static std::map<std::string, TokenType> keywords = {
 	{"var", TokenType::VAR},
 	{"func", TokenType::FUNC},
 	{"if", TokenType::IF},
+	{"elif", TokenType::ELIF},
 	{"else", TokenType::ELSE},
 	{"while", TokenType::WHILE},
 	{"for", TokenType::FOR},
 	{"return", TokenType::RETURN},
 	{"break", TokenType::BREAK},
 	{"continue", TokenType::CONTINUE},
-	{"print", TokenType::PRINT},
 	{"in", TokenType::IN},
 	{"and", TokenType::AND},
 	{"or", TokenType::OR},
@@ -54,7 +53,6 @@ static std::map<std::string, TokenType> keywords = {
 	{"true", TokenType::TRUE},
 	{"false", TokenType::FALSE},
 	{"nil", TokenType::NIL},
-	{"end", TokenType::END},
 	{"parallel", TokenType::PARALLEL},
 	{"async", TokenType::ASYNC},
 	{"await", TokenType::AWAIT}

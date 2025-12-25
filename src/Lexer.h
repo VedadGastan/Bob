@@ -129,6 +129,8 @@ public:
 			switch (c) {
 			case '(': addToken(TokenType::LPAREN); break;
 			case ')': addToken(TokenType::RPAREN); break;
+			case '{': addToken(TokenType::LBRACE); break;
+			case '}': addToken(TokenType::RBRACE); break;
 			case '[': addToken(TokenType::LBRACKET); break;
 			case ']': addToken(TokenType::RBRACKET); break;
 			case ',': addToken(TokenType::COMMA); break;
