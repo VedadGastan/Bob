@@ -600,9 +600,7 @@ private:
 
 		if (auto parallelStmt = std::dynamic_pointer_cast<ParallelStmt>(stmt)) {
 			std::string varName = "";
-			double startVal = 0;
-			double endVal = 0;
-			double stepVal = 1;
+			double startVal = 0, endVal = 0, stepVal = 1;
 			bool validRange = false;
 
 			auto prevEnv = environment;
@@ -614,15 +612,11 @@ private:
 				if (auto varStmt = std::dynamic_pointer_cast<VarStmt>(parallelStmt->initializer)) {
 					varName = varStmt->name;
 					Value v = environment->get(varName);
-					if (v.type == ValueType::NUMBER) {
-						startVal = v.numberValue;
-					}
+					if (v.type == ValueType::NUMBER) startVal = v.numberValue;
 				}
 			}
 
-			if (varName.empty()) {
-				throw RuntimeError("Parallel for requires a variable initializer");
-			}
+			if (varName.empty()) throw RuntimeError("Parallel for requires a variable initializer");
 
 			if (auto bin = std::dynamic_pointer_cast<BinaryExpr>(parallelStmt->condition)) {
 				if (bin->op.type == TokenType::LESS || bin->op.type == TokenType::LESS_EQUAL) {
@@ -651,57 +645,33 @@ private:
 
 			if (validRange && stepVal != 0) {
 				int totalOps = static_cast<int>((endVal - startVal) / stepVal);
-
-				if (totalOps <= 0 || totalOps < 20) {
-					auto seqEnv = std::make_shared<Environment>(environment);
-					environment = seqEnv;
-					executeStmt(parallelStmt->initializer);
-					while (evaluateExpr(parallelStmt->condition).isTruthy()) {
-						executeStmt(parallelStmt->body);
-						evaluateExpr(parallelStmt->increment);
-					}
-					environment = prevEnv;
-					return;
-				}
+				if (totalOps <= 0) return;
 
 				int actualThreads = std::min(numThreads, totalOps);
 				std::vector<std::thread> threads;
 				std::atomic<bool> hasError{ false };
 				std::string errorMsg;
 				std::mutex errorMutex;
-
-				auto sharedGlobals = globals;
-				auto sharedEnv = environment;
-				auto sharedBuiltins = builtins;
-				auto bodyStmt = parallelStmt->body;
-				auto condExpr = parallelStmt->condition;
-				auto incExpr = parallelStmt->increment;
-
 				std::atomic<int> sharedCounter{ 0 };
 
 				for (int t = 0; t < actualThreads; t++) {
 					threads.emplace_back([=, &sharedCounter, &hasError, &errorMsg, &errorMutex]() {
 						try {
 							Interpreter threadInterp;
-							threadInterp.globals = sharedGlobals;
-							threadInterp.environment = std::make_shared<Environment>(sharedEnv);
-							threadInterp.builtins = sharedBuiltins;
+							threadInterp.globals = globals;
+							threadInterp.builtins = builtins;
 
 							while (!hasError) {
 								int idx = sharedCounter.fetch_add(1);
 								double currentI = startVal + (idx * stepVal);
 
-								bool stillRunning = false;
-								if (stepVal > 0) stillRunning = (currentI < endVal);
-								else stillRunning = (currentI > endVal);
+								if (stepVal > 0 ? (currentI >= endVal) : (currentI <= endVal)) break;
 
-								if (!stillRunning) break;
-
-								auto iterEnv = std::make_shared<Environment>(sharedEnv);
+								auto iterEnv = std::make_shared<Environment>(environment);
 								iterEnv->define(varName, Value::Number(currentI));
 								threadInterp.environment = iterEnv;
 
-								threadInterp.executeStmt(bodyStmt);
+								threadInterp.executeStmt(parallelStmt->body);
 							}
 						}
 						catch (const std::exception& e) {
@@ -716,7 +686,7 @@ private:
 				if (hasError) throw RuntimeError(errorMsg);
 			}
 			else {
-				throw RuntimeError("Parallel loop too complex for automatic parallelization. Use simple numeric ranges.");
+				throw RuntimeError("Parallel loop too complex or invalid range.");
 			}
 			return;
 		}
