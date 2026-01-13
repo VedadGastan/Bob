@@ -1,6 +1,6 @@
 # Bob Programming Language
 
-Bob je interpretirani programski jezik visokog nivoa dizajniran kao imperativni jezik opste namjene sa snaznom podrskom za paralelno programiranje.
+Bob je interpretirani programski jezik visokog nivoa dizajniran kao imperativni jezik opste namjene sa podrskom za paralelno programiranje.
 
 ## Karakteristike
 
@@ -9,7 +9,7 @@ Bob je interpretirani programski jezik visokog nivoa dizajniran kao imperativni 
 - **Funkcije prvog reda** - funkcije kao vrijednosti
 - **Ugradjena paralelizacija** - `parallel` petlje za visenitno izvrsavanje
 - **Atomicne operacije** - thread-safe pristup dijeljenim podacima
-- **C-slicna sintaksa** - citljiva i intuitivna
+- **C-ovska sintaksa** - citljiva i intuitivna
 
 ## Instalacija
 
