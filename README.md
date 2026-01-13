@@ -50,20 +50,20 @@ build.bat run examples/hello.bob
 ### Varijable
 
 ```bob
-var x = 10;
-var ime = "Bob";
-var brojevi = [1, 2, 3, 4, 5];
+var x = 10
+var ime = "Bob"
+var brojevi = [1, 2, 3, 4, 5]
 ```
 
 ### Funkcije
 
 ```bob
 func saberi(a, b) {
-    return a + b;
+    return a + b
 }
 
-var rezultat = saberi(5, 3);
-print(rezultat);  // 8
+var rezultat = saberi(5, 3)
+print(rezultat)  // 8
 ```
 
 ### Kontrolne strukture
@@ -71,23 +71,23 @@ print(rezultat);  // 8
 ```bob
 // If-elif-else
 if (x > 10) {
-    print("Vece od 10");
+    print("Vece od 10")
 } elif (x > 5) {
-    print("Vece od 5");
+    print("Vece od 5")
 } else {
-    print("5 ili manje");
+    print("5 ili manje")
 }
 
 // While petlja
-var i = 0;
+var i = 0
 while (i < 5) {
-    print(i);
-    i++;
+    print(i)
+    i++
 }
 
 // For petlja
 for (var i = 0; i < 10; i++) {
-    print(i);
+    print(i)
 }
 ```
 
@@ -96,25 +96,25 @@ for (var i = 0; i < 10; i++) {
 ### Parallel petlja
 
 ```bob
-var podaci = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+var podaci = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
 
 parallel (var i = 0; i < len(podaci); i++) {
-    podaci[i] = podaci[i] * podaci[i];
+    podaci[i] = podaci[i] * podaci[i]
 }
 
-print(podaci);  // [1, 4, 9, 16, 25, 36, 49, 64, 81, 100]
+print(podaci)  // [1, 4, 9, 16, 25, 36, 49, 64, 81, 100]
 ```
 
 ### Atomicne operacije
 
 ```bob
-var brojac = 0;
+var brojac = 0
 
 parallel (var i = 0; i < 1000; i++) {
-    atomic_inc("brojac");
+    atomic_inc("brojac")
 }
 
-print(brojac);  // 1000
+print(brojac)  // 1000
 ```
 
 #### Dostupne atomicne funkcije:
@@ -133,9 +133,9 @@ print(brojac);  // 1000
 ### Osnovne funkcije
 
 ```bob
-print("Hello World");           // Ispis
-var duzina = len([1, 2, 3]);   // Duzina niza/stringa
-var unos = input("Unesite: "); // citanje unosa
+print("Hello World")           // Ispis
+var duzina = len([1, 2, 3])   // Duzina niza/stringa
+var unos = input("Unesite: ") // citanje unosa
 ```
 
 ### Matematicke funkcije
@@ -156,9 +156,9 @@ log(x)          // prirodni logaritam
 ### Operacije sa nizovima
 
 ```bob
-var lista = [1, 2, 3];
-push(lista, 4);              // Dodaj na kraj
-var zadnji = pop(lista);     // Ukloni zadnji element
+var lista = [1, 2, 3]
+push(lista, 4)              // Dodaj na kraj
+var zadnji = pop(lista)     // Ukloni zadnji element
 ```
 
 ### Pomocne funkcije
@@ -203,23 +203,23 @@ and or not
 
 ```bob
 func fibonacci(n) {
-    if (n <= 1) return n;
-    return fibonacci(n - 1) + fibonacci(n - 2);
+    if (n <= 1) return n
+    return fibonacci(n - 1) + fibonacci(n - 2)
 }
 
 for (var i = 0; i < 10; i++) {
-    print(fibonacci(i));
+    print(fibonacci(i))
 }
 ```
 
 ### Paralelna obrada matrice
 
 ```bob
-var matrica = [[1, 2, 3], [4, 5, 6], [7, 8, 9]];
+var matrica = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
 
 parallel (var i = 0; i < len(matrica); i++) {
     for (var j = 0; j < len(matrica[i]); j++) {
-        matrica[i][j] = matrica[i][j] * 2;
+        matrica[i][j] = matrica[i][j] * 2
     }
 }
 
@@ -230,20 +230,20 @@ print(matrica);
 
 ```bob
 func primijeni(niz, funkcija) {
-    var rezultat = [];
+    var rezultat = []
     for (var i = 0; i < len(niz); i++) {
-        push(rezultat, funkcija(niz[i]));
+        push(rezultat, funkcija(niz[i]))
     }
-    return rezultat;
+    return rezultat
 }
 
 func kvadrat(x) {
-    return x * x;
+    return x * x
 }
 
-var brojevi = [1, 2, 3, 4, 5];
-var kvadrati = primijeni(brojevi, kvadrat);
-print(kvadrati);  // [1, 4, 9, 16, 25]
+var brojevi = [1, 2, 3, 4, 5]
+var kvadrati = primijeni(brojevi, kvadrat)
+print(kvadrati)  // [1, 4, 9, 16, 25]
 ```
 
 ## Struktura projekta
