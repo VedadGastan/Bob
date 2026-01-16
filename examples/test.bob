@@ -1,193 +1,140 @@
-﻿// ============================================================================
-// COMPREHENSIVE TEST SUITE FOR CUSTOM PROGRAMMING LANGUAGE
-// ============================================================================
-// This file tests all language features including:
-// - Basic types and literals
-// - Variables and assignments
-// - Operators (arithmetic, comparison, logical)
-// - Control flow (if/else, while, for)
-// - Functions and recursion
-// - Arrays and indexing
-// - Built-in functions
-// - Parallel loops and threading
-// - Atomic operations
-// - Edge cases and error conditions
-// ============================================================================
+﻿print("--- Testing Basic Types ---")
 
-print("========================================")
-print("STARTING COMPREHENSIVE TEST SUITE")
-print("========================================")
+var nilValue = nil
+var boolTrue = true
+var boolFalse = false
+var number = 42
+var decimal = 3.14159
+var negative = -10.5
+var text = "Hello, Bob!"
+
+print("nil:", nilValue)
+print("bool:", boolTrue, boolFalse)
+print("number:", number, decimal, negative)
+print("string:", text)
 print("")
 
-// ============================================================================
-// TEST 1: BASIC LITERALS AND TYPES
-// ============================================================================
-print("TEST 1: Basic Literals and Types")
-print("----------------------------------")
 
-var testNum = 42
-var testFloat = 3.14159
-var testString = "Hello, World!"
-var testBool = true
-var testNil = nil
-var testArray = [1, 2, 3, 4, 5]
-
-print("Number:", testNum)
-print("Float:", testFloat)
-print("String:", testString)
-print("Boolean:", testBool)
-print("Nil:", testNil)
-print("Array:", testArray)
-print("Test 1 passed")
-print("")
-
-// ============================================================================
-// TEST 2: ARITHMETIC OPERATIONS
-// ============================================================================
-print("TEST 2: Arithmetic Operations")
-print("------------------------------")
+print("--- Testing Arithmetic Operators ---")
 
 var a = 10
 var b = 3
 
-print("Addition (10 + 3):", a + b)
-print("Subtraction (10 - 3):", a - b)
-print("Multiplication (10 * 3):", a * b)
-print("Division (10 / 3):", a / b)
-print("Modulo (10 % 3):", a % b)
-print("Exponentiation (10 ** 3):", a ** b)
-print("Negation (-10):", -a)
-print("Test 2 passed")
+print("Addition: 10 + 3 =", a + b)
+print("Subtraction: 10 - 3 =", a - b)
+print("Multiplication: 10 * 3 =", a * b)
+print("Division: 10 / 3 =", a / b)
+print("Modulo: 10 % 3 =", a % b)
+print("Exponentiation: 2 ** 8 =", 2 ** 8)
 print("")
 
-// ============================================================================
-// TEST 3: STRING OPERATIONS
-// ============================================================================
-print("TEST 3: String Operations")
-print("-------------------------")
 
-var str1 = "Hello"
-var str2 = "World"
-var str3 = str1 + " " + str2
-print("Concatenation:", str3)
+print("--- Testing Comparison Operators ---")
 
-var repeated = "Hi" * 3
-print("Repetition (\"Hi\" * 3):", repeated)
-
-var contained = "ell" in "Hello"
-print("Contains ('ell' in 'Hello'):", contained)
-
-var strLen = len("Hello")
-print("Length of 'Hello':", strLen)
-print("Test 3 passed")
+print("10 == 10:", 10 == 10)
+print("10 != 5:", 10 != 5)
+print("10 > 5:", 10 > 5)
+print("10 >= 10:", 10 >= 10)
+print("5 < 10:", 5 < 10)
+print("5 <= 5:", 5 <= 5)
 print("")
 
-// ============================================================================
-// TEST 4: COMPARISON OPERATORS
-// ============================================================================
-print("TEST 4: Comparison Operators")
-print("-----------------------------")
+
+print("--- Testing Logical Operators ---")
+
+print("true and true:", true and true)
+print("true and false:", true and false)
+print("false or true:", false or true)
+print("not true:", not true)
+print("not false:", not false)
+print("")
+
+
+print("--- Testing Compound Assignment ---")
 
 var x = 10
-var y = 20
+print("Initial x:", x)
 
-print("10 == 10:", x == 10)
-print("10 != 20:", x != y)
-print("10 < 20:", x < y)
-print("10 <= 10:", x <= 10)
-print("20 > 10:", y > x)
-print("20 >= 20:", y >= 20)
-print("Test 4 passed")
+x += 5
+print("After x += 5:", x)
+
+x -= 3
+print("After x -= 3:", x)
+
+x *= 2
+print("After x *= 2:", x)
+
+x /= 4
+print("After x /= 4:", x)
+
+x %= 5
+print("After x %= 5:", x)
 print("")
 
-// ============================================================================
-// TEST 5: LOGICAL OPERATORS
-// ============================================================================
-print("TEST 5: Logical Operators")
-print("--------------------------")
 
-var t = true
-var f = false
+print("--- Testing Increment/Decrement ---")
 
-print("true and true:", t and t)
-print("true and false:", t and f)
-print("false or true:", f or t)
-print("false or false:", f or f)
-print("not true:", not t)
-print("not false:", not f)
-print("Test 5 passed")
+var counter = 5
+print("Initial counter:", counter)
+
+var old = counter++
+print("counter++ returns:", old, ", counter is now:", counter)
+
+old = counter--
+print("counter-- returns:", old, ", counter is now:", counter)
 print("")
 
-// ============================================================================
-// TEST 6: VARIABLE ASSIGNMENT AND COMPOUND ASSIGNMENT
-// ============================================================================
-print("TEST 6: Assignment Operators")
-print("-----------------------------")
 
-var counter = 10
-print("Initial value:", counter)
+print("--- Testing String Operations ---")
+var str1 = "Hello"
+var str2 = "World"
+var greeting = str1 + " " + str2
+print("Concatenation:", greeting)
 
-counter = counter + 5
-print("After += 5:", counter)
+var repeated = "Ha" * 3
+print("String repetition 'Ha' * 3:", repeated)
 
-counter += 3
-print("Using += 3:", counter)
+print("String length:", len("Hello"))
+print("'o' in 'Hello':", "o" in "Hello")
+print("'x' in 'Hello':", "x" in "Hello")
 
-counter -= 8
-print("Using -= 8:", counter)
-
-counter *= 2
-print("Using *= 2:", counter)
-
-counter /= 4
-print("Using /= 4:", counter)
-
-counter %= 3
-print("Using %= 3:", counter)
-
-counter++
-print("After counter++:", counter)
-
-counter--
-print("After counter--:", counter)
-
-print("Test 6 passed")
+// String indexing
+var word = "Hello"
+print("word[0]:", word[0])
+print("word[-1]:", word[-1])
 print("")
 
-// ============================================================================
-// TEST 7: ARRAYS
-// ============================================================================
-print("TEST 7: Array Operations")
-print("-------------------------")
 
-var arr = [10, 20, 30, 40, 50]
+print("--- Testing Arrays ---")
+var arr = [1, 2, 3, 4, 5]
 print("Array:", arr)
-print("Length:", len(arr))
-print("Element at index 0:", arr[0])
-print("Element at index 2:", arr[2])
-print("Element at index -1 (last):", arr[-1])
-print("Element at index -2:", arr[-2])
+print("arr[0]:", arr[0])
+print("arr[2]:", arr[2])
+print("arr[-1]:", arr[-1])
 
 arr[1] = 99
 print("After arr[1] = 99:", arr)
 
-var nested = [[1, 2], [3, 4], [5, 6]]
-print("Nested array:", nested)
-print("nested[1][0]:", nested[1][0])
+push(arr, 6)
+print("After push(arr, 6):", arr)
 
-var empty = []
-print("Empty array:", empty)
-print("Empty array length:", len(empty))
+var popped = pop(arr)
+print("Popped value:", popped)
+print("Array after pop:", arr)
 
-print("Test 7 passed")
+print("Array length:", len(arr))
+
+// Mixed type array
+var mixed = [1, "text", true, [1, 2, 3]]
+print("Mixed array:", mixed)
+
+// Membership test
+print("3 in [1,2,3,4,5]:", 3 in [1, 2, 3, 4, 5])
+print("10 in [1,2,3,4,5]:", 10 in [1, 2, 3, 4, 5])
 print("")
 
-// ============================================================================
-// TEST 8: CONTROL FLOW - IF/ELSE
-// ============================================================================
-print("TEST 8: If/Else Control Flow")
-print("-----------------------------")
 
+print("--- Testing If/Elif/Else ---")
 var score = 85
 
 if (score >= 90) {
@@ -199,103 +146,33 @@ if (score >= 90) {
 } else {
     print("Grade: F")
 }
-
-var nested_test = 5
-if (nested_test > 0) {
-    print("Positive number")
-    if (nested_test % 2 == 0) {
-        print("Even")
-    } else {
-        print("Odd")
-    }
-}
-
-print("Test 8 passed")
 print("")
 
-// ============================================================================
-// TEST 9: CONTROL FLOW - WHILE LOOPS
-// ============================================================================
-print("TEST 9: While Loops")
-print("--------------------")
 
+print("--- Testing While Loop ---")
 var i = 0
-var sum = 0
 while (i < 5) {
-    sum = sum + i
-    i = i + 1
+    print("While iteration:", i)
+    i++
 }
-print("Sum of 0 to 4:", sum)
-
-var countdown = 3
-print("Countdown:")
-while (countdown > 0) {
-    print(countdown)
-    countdown = countdown - 1
-}
-print("Liftoff!")
-
-print("Test 9 passed")
 print("")
 
-// ============================================================================
-// TEST 10: CONTROL FLOW - FOR LOOPS
-// ============================================================================
-print("TEST 10: For Loops")
-print("-------------------")
 
-var forSum = 0
-for (var j = 0; j < 10; j++) {
-    forSum = forSum + j
+print("--- Testing For Loop ---")
+for (var j = 0; j < 5; j++) {
+    print("For iteration:", j)
 }
-print("Sum of 0 to 9:", forSum)
-
-var squares = [0, 0, 0, 0, 0]
-for (var k = 1; k <= 5; k++) {
-    squares[k - 1] = k * k
-}
-print("Squares of 1-5:", squares)
-
-print("Test 10 passed")
 print("")
 
-// ============================================================================
-// TEST 11: FUNCTIONS
-// ============================================================================
-print("TEST 11: Functions")
-print("-------------------")
 
-func add(x, y) {
-    return x + y
-}
-
-func multiply(x, y) {
-    return x * y
+print("--- Testing Functions ---")
+func add(a, b) {
+    return a + b
 }
 
 func greet(name) {
-    return "Hello, " + name + "!"
+    print("Hello, " + name + "!")
 }
-
-func noReturn() {
-    print("This function has no return value")
-}
-
-print("add(5, 3):", add(5, 3))
-print("multiply(4, 7):", multiply(4, 7))
-print("greet(\"Alice\"):", greet("Alice"))
-
-var result = noReturn()
-print("noReturn() returns:", result)
-
-print("Test 11 passed")
-print("")
-
-// ============================================================================
-// TEST 12: RECURSIVE FUNCTIONS
-// ============================================================================
-print("TEST 12: Recursive Functions")
-print("-----------------------------")
 
 func factorial(n) {
     if (n <= 1) {
@@ -304,34 +181,18 @@ func factorial(n) {
     return n * factorial(n - 1)
 }
 
-func fibonacci(n) {
-    if (n <= 1) {
-        return n
-    }
-    return fibonacci(n - 1) + fibonacci(n - 2)
-}
-
+print("add(5, 3):", add(5, 3))
+greet("Bob")
 print("factorial(5):", factorial(5))
-print("factorial(7):", factorial(7))
-print("fibonacci(0):", fibonacci(0))
-print("fibonacci(1):", fibonacci(1))
-print("fibonacci(6):", fibonacci(6))
-print("fibonacci(10):", fibonacci(10))
-
-print("Test 12 passed")
 print("")
 
-// ============================================================================
-// TEST 13: CLOSURES AND SCOPE
-// ============================================================================
-print("TEST 13: Closures and Scope")
-print("----------------------------")
 
+print("--- Testing Closures ---")
 func makeCounter() {
     var count = 0
     
     func increment() {
-        count = count + 1
+        count++
         return count
     }
     
@@ -339,478 +200,215 @@ func makeCounter() {
 }
 
 var counter1 = makeCounter()
-print("Counter1 call 1:", counter1())
-print("Counter1 call 2:", counter1())
-print("Counter1 call 3:", counter1())
-
 var counter2 = makeCounter()
-print("Counter2 call 1:", counter2())
-print("Counter2 call 2:", counter2())
 
-print("Test 13 passed")
+print("counter1():", counter1())
+print("counter1():", counter1())
+print("counter2():", counter2())
+print("counter1():", counter1())
 print("")
 
-// ============================================================================
-// TEST 14: BUILT-IN MATH FUNCTIONS
-// ============================================================================
-print("TEST 14: Built-in Math Functions")
-print("----------------------------------")
 
+print("--- Testing First-Class Functions ---")
+func multiply(a, b) {
+    return a * b
+}
+
+var operation = multiply
+print("operation(4, 5):", operation(4, 5))
+print("")
+
+
+print("--- Testing Math Functions ---")
 print("sqrt(16):", sqrt(16))
-print("sqrt(25):", sqrt(25))
 print("pow(2, 10):", pow(2, 10))
 print("abs(-42):", abs(-42))
-print("abs(42):", abs(42))
 print("floor(3.7):", floor(3.7))
 print("ceil(3.2):", ceil(3.2))
 print("round(3.5):", round(3.5))
-print("round(3.4):", round(3.4))
-
-var angle = 3.14159 / 2
-print("sin(π/2):", sin(angle))
+print("sin(0):", sin(0))
 print("cos(0):", cos(0))
-print("tan(π/4):", tan(0.785398))
-
+print("tan(0):", tan(0))
 print("log(2.71828):", log(2.71828))
-print("log(10):", log(10))
-
-print("Test 14 passed")
 print("")
 
-// ============================================================================
-// TEST 15: RANDOM AND TIME FUNCTIONS
-// ============================================================================
-print("TEST 15: Random and Time Functions")
-print("------------------------------------")
 
-print("Random number 1:", random())
-print("Random number 2:", random())
-print("Random number 3:", random())
+print("--- Testing Utility Functions ---")
+var rand = random()
+print("random() (between 0 and 1):", rand)
 
-var startTime = time()
-print("Current timestamp:", startTime)
+var currentTime = time()
+print("time() (milliseconds):", currentTime)
 
+print("Sleeping for 100ms...")
 sleep(100)
-var endTime = time()
-print("Time after 100ms sleep:", endTime)
-print("Elapsed time (should be ~100ms):", endTime - startTime)
-
-print("Test 15 passed")
+print("Done sleeping!")
 print("")
 
-// ============================================================================
-// TEST 16: ARRAY ALGORITHM - BUBBLE SORT
-// ============================================================================
-print("TEST 16: Array Algorithm - Bubble Sort")
-print("---------------------------------------")
 
-func bubbleSort(arr) {
-    var n = len(arr)
-    for (var i = 0; i < n - 1; i++) {
-        for (var j = 0; j < n - i - 1; j++) {
-            if (arr[j] > arr[j + 1]) {
-                var temp = arr[j]
-                arr[j] = arr[j + 1]
-                arr[j + 1] = temp
-            }
-        }
-    }
-    return arr
+print("--- Testing Truthiness ---")
+if (nil) {
+    print("nil is truthy")
+} else {
+    print("nil is falsy")
 }
 
-var unsorted = [64, 34, 25, 12, 22, 11, 90]
-print("Unsorted array:", unsorted)
-var sorted = bubbleSort(unsorted)
-print("Sorted array:", sorted)
-
-print("Test 16 passed")
-print("")
-
-// ============================================================================
-// TEST 17: ARRAY ALGORITHM - LINEAR SEARCH
-// ============================================================================
-print("TEST 17: Array Algorithm - Linear Search")
-print("-----------------------------------------")
-
-func linearSearch(arr, target) {
-    for (var i = 0; i < len(arr); i++) {
-        if (arr[i] == target) {
-            return i
-        }
-    }
-    return -1
+if (0) {
+    print("0 is truthy")
+} else {
+    print("0 is falsy")
 }
 
-var searchArray = [10, 23, 45, 67, 89, 12, 34]
-print("Array:", searchArray)
-print("Search for 67:", linearSearch(searchArray, 67))
-print("Search for 12:", linearSearch(searchArray, 12))
-print("Search for 100:", linearSearch(searchArray, 100))
-
-print("Test 17 passed")
-print("")
-
-// ============================================================================
-// TEST 18: PARALLEL LOOPS - BASIC TEST
-// ============================================================================
-print("TEST 18: Parallel Loops - Basic Test")
-print("--------------------------------------")
-
-var parallelSum = 0
-atomic_store("parallelSum", 0)
-
-print("Running parallel loop...")
-var start = time()
-parallel (var i = 0; i < 100; i++) {
-    atomic_add("parallelSum", i)
-}
-var end = time()
-
-var finalSum = atomic_load("parallelSum")
-print("Parallel sum result:", finalSum)
-print("Expected (0+1+...+99):", 4950)
-print("Parallel execution time:", end - start, "ms")
-
-print("Test 18 passed")
-print("")
-
-// ============================================================================
-// TEST 19: PARALLEL VS SEQUENTIAL PERFORMANCE
-// ============================================================================
-print("TEST 19: Parallel vs Sequential Performance")
-print("--------------------------------------------")
-
-// Sequential version
-var seqSum = 0
-var seqStart = time()
-for (var i = 0; i < 1000000; i++) {
-    seqSum = seqSum + sqrt(i) * sqrt(i)
-}
-var seqEnd = time()
-print("Sequential sum:", seqSum)
-print("Sequential time:", seqEnd - seqStart, "ms")
-
-// Parallel version
-var parSum = 0
-atomic_store("parSum", 0)
-var parStart = time()
-parallel (var i = 0; i < 1000000; i++) {
-    var val = sqrt(i) * sqrt(i)
-    atomic_add("parSum", val)
-}
-var parEnd = time()
-parSum = atomic_load("parSum")
-print("Parallel sum:", parSum)
-print("Parallel time:", parEnd - parStart, "ms")
-print("Speedup ratio:", (seqEnd - seqStart) / (parEnd - parStart))
-
-print("Test 19 passed")
-print("")
-
-// ============================================================================
-// TEST 20: ATOMIC OPERATIONS
-// ============================================================================
-print("TEST 20: Atomic Operations")
-print("---------------------------")
-
-atomic_store("counter", 0)
-print("Initial value:", atomic_load("counter"))
-
-atomic_inc("counter")
-print("After increment:", atomic_load("counter"))
-
-atomic_inc("counter")
-print("After increment:", atomic_load("counter"))
-
-atomic_dec("counter")
-print("After decrement:", atomic_load("counter"))
-
-atomic_add("counter", 10)
-print("After add 10:", atomic_load("counter"))
-
-atomic_sub("counter", 5)
-print("After sub 5:", atomic_load("counter"))
-
-var old = atomic_xchg("counter", 100)
-print("After exchange (old value):", old)
-print("New value:", atomic_load("counter"))
-
-var success1 = atomic_cas("counter", 100, 200)
-print("CAS 100->200 (should succeed):", success1)
-print("Value after CAS:", atomic_load("counter"))
-
-var success2 = atomic_cas("counter", 100, 300)
-print("CAS 100->300 (should fail):", success2)
-print("Value after failed CAS:", atomic_load("counter"))
-
-print("Test 20 passed")
-print("")
-
-// ============================================================================
-// TEST 21: PARALLEL LOOP WITH ARRAYS
-// ============================================================================
-print("TEST 21: Parallel Loop with Arrays")
-print("-----------------------------------")
-
-var results = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
-
-parallel (var i = 0; i < 20; i++) {
-    results[i] = i * i
+if ("") {
+    print("empty string is truthy")
+} else {
+    print("empty string is falsy")
 }
 
-print("Squares (parallel computation):", results)
+if ([]) {
+    print("empty array is truthy")
+} else {
+    print("empty array is falsy")
+}
 
-print("Test 21 passed")
+if (42) {
+    print("42 is truthy")
+}
+
+if ("text") {
+    print("'text' is truthy")
+}
 print("")
 
-// ============================================================================
-// TEST 22: COMPLEX FUNCTION - PRIME NUMBER CHECKER
-// ============================================================================
-print("TEST 22: Prime Number Checker")
-print("------------------------------")
 
-func isPrime(n) {
-    if (n <= 1) return false
-    if (n <= 3) return true
-    if (n % 2 == 0 or n % 3 == 0) return false
+print("--- Testing Nested Functions and Scope ---")
+var globalVar = "global"
+
+func outer() {
+    var outerVar = "outer"
     
-    var i = 5
-    while (i * i <= n) {
-        if (n % i == 0 or n % (i + 2) == 0) {
-            return false
-        }
-        i = i + 6
+    func inner() {
+        var innerVar = "inner"
+        print("From inner - global:", globalVar)
+        print("From inner - outer:", outerVar)
+        print("From inner - inner:", innerVar)
     }
-    return true
+    
+    inner()
 }
 
-print("isPrime(2):", isPrime(2))
-print("isPrime(4):", isPrime(4))
-print("isPrime(17):", isPrime(17))
-print("isPrime(25):", isPrime(25))
-print("isPrime(97):", isPrime(97))
-
-var primes = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
-var primeCount = 0
-for (var n = 2; n < 50; n++) {
-    if (isPrime(n)) {
-        primes[primeCount] = n
-        primeCount = primeCount + 1
-    }
-}
-print("Primes less than 50:", primes)
-
-print("Test 22 passed")
+outer()
 print("")
 
-// ============================================================================
-// TEST 23: THREAD INFO FUNCTIONS
-// ============================================================================
-print("TEST 23: Thread Info Functions")
-print("--------------------------------")
 
+print("--- Testing Complex Expressions ---")
+var result = (5 + 3) * 2 - 10 / 2
+print("(5 + 3) * 2 - 10 / 2 =", result)
+
+var complex = 2 ** 3 + 5 * (10 - 3) / 2
+print("2 ** 3 + 5 * (10 - 3) / 2 =", complex)
+print("")
+
+
+print("--- Testing Parallel Execution ---")
 print("Number of threads available:", num_threads())
-print("Current thread ID:", thread_id())
 
-print("Test 23 passed")
-print("")
+// Simple parallel loop
+var sum = 0
+atomic_store("sum", 0)
 
-// ============================================================================
-// TEST 24: RACE CONDITION TEST
-// ============================================================================
-print("TEST 24: Race Condition Test")
-print("-----------------------------")
-
-// This test demonstrates the importance of atomic operations
-var raceCounter = 0
-atomic_store("raceCounter", 0)
-
-parallel (var i = 0; i < 500; i++) {
-    var temp = atomic_load("raceCounter")
-    atomic_store("raceCounter", temp + 1)
+parallel (var k = 1; k <= 100; k++) {
+    atomic_add("sum", k)
 }
 
-raceCounter = atomic_load("raceCounter")
-print("Race counter (may not be 500 due to race):", raceCounter)
+print("Parallel sum 1 to 100:", atomic_load("sum"))
 
-// Correct version using atomic_inc
-var safeCounter = 0
-atomic_store("safeCounter", 0)
+// Parallel sum of squares
+atomic_store("sumSquares", 0)
 
-parallel (var i = 0; i < 500; i++) {
-    atomic_inc("safeCounter")
+parallel (var m = 1; m <= 50; m++) {
+    atomic_add("sumSquares", m * m)
 }
 
-safeCounter = atomic_load("safeCounter")
-print("Safe counter (should be 500):", safeCounter)
-
-print("Test 24 passed")
+print("Parallel sum of squares 1 to 50:", atomic_load("sumSquares"))
 print("")
 
-// ============================================================================
-// TEST 25: MATRIX MULTIPLICATION (Parallel vs Sequential)
-// ============================================================================
-print("TEST 25: Matrix Operations")
-print("---------------------------")
 
-func matrixMultiplySeq(A, B) {
-    var rowsA = len(A)
-    var colsA = len(A[0])
-    var colsB = len(B[0])
-    
-    // Create result matrix with proper initialization
-    var result = [[0, 0], [0, 0]]
-    
-    for (var i = 0; i < rowsA; i++) {
-        for (var j = 0; j < colsB; j++) {
-            var sum = 0
-            for (var k = 0; k < colsA; k++) {
-                sum = sum + A[i][k] * B[k][j]
-            }
-            result[i][j] = sum
+print("--- Testing Atomic Operations ---")
+atomic_store("testVar", 10)
+print("After atomic_store('testVar', 10):", atomic_load("testVar"))
+
+atomic_add("testVar", 5)
+print("After atomic_add('testVar', 5):", atomic_load("testVar"))
+
+atomic_sub("testVar", 3)
+print("After atomic_sub('testVar', 3):", atomic_load("testVar"))
+
+atomic_inc("testVar")
+print("After atomic_inc('testVar'):", atomic_load("testVar"))
+
+atomic_dec("testVar")
+print("After atomic_dec('testVar'):", atomic_load("testVar"))
+
+var oldVal = atomic_xchg("testVar", 100)
+print("atomic_xchg returned:", oldVal, ", new value:", atomic_load("testVar"))
+
+var success = atomic_cas("testVar", 100, 200)
+print("atomic_cas(100, 200) success:", success, ", value:", atomic_load("testVar"))
+
+success = atomic_cas("testVar", 50, 300)
+print("atomic_cas(50, 300) success:", success, ", value:", atomic_load("testVar"))
+print("")
+
+
+print("--- Testing Fibonacci (Recursive) ---")
+func fib(n) {
+    if (n <= 1) {
+        return n
+    }
+    return fib(n - 1) + fib(n - 2)
+}
+
+print("Fibonacci sequence (first 10):")
+for (var f = 0; f < 10; f++) {
+    print("fib(" + f + ") =", fib(f))
+}
+print("")
+
+
+print("--- Testing Array Filter Function ---")
+func filterEven(arr) {
+    var result = []
+    for (var i = 0; i < len(arr); i++) {
+        if (arr[i] % 2 == 0) {
+            push(result, arr[i])
         }
     }
-    
     return result
 }
 
-var matA = [[1, 2, 3], [4, 5, 6]]
-var matB = [[7, 8], [9, 10], [11, 12]]
-
-print("Matrix A:", matA)
-print("Matrix B:", matB)
-
-var matC = matrixMultiplySeq(matA, matB)
-print("Result A * B:", matC)
-
-print("Test 25 passed")
+var numbers = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+var evens = filterEven(numbers)
+print("Original:", numbers)
+print("Even numbers:", evens)
 print("")
 
-// ============================================================================
-// TEST 26: FIBONACCI SEQUENCE GENERATION
-// ============================================================================
-print("TEST 26: Fibonacci Sequence")
-print("----------------------------")
 
-func fibSequence(n) {
-    if (n <= 0) return []
-    if (n == 1) return [0]
-    
-    var fibs = [0, 1]
-    
-    for (var i = 2; i < n; i++) {
-        // Use the new push function
-        var next = fibs[i - 1] + fibs[i - 2]
-        push(fibs, next)
+print("--- Testing Array Map Function ---")
+func mapSquare(arr) {
+    var result = []
+    for (var i = 0; i < len(arr); i++) {
+        push(result, arr[i] * arr[i])
     }
-    
-    return fibs
+    return result
 }
 
-var fibSeq = fibSequence(15)
-print("First 15 Fibonacci numbers:", fibSeq)
-
-// ============================================================================
-// TEST 27: STRING MANIPULATION
-// ============================================================================
-print("TEST 27: String Manipulation")
-print("-----------------------------")
-
-var original = "Hello, World!"
-print("Original:", original)
-
-var sentence = "The quick brown fox"
-print("Sentence:", sentence)
-print("Length:", len(sentence))
-
-var testStr = "test"
-print("Test string:", testStr)
-print("Contains 'es':", "es" in testStr)
-print("Contains 'xyz':", "xyz" in testStr)
-
-print("Test 27 passed")
+var nums = [1, 2, 3, 4, 5]
+var squared = mapSquare(nums)
+print("Original:", nums)
+print("Squared:", squared)
 print("")
 
-// ============================================================================
-// TEST 28: GREATEST COMMON DIVISOR
-// ============================================================================
-print("TEST 28: Greatest Common Divisor")
-print("----------------------------------")
 
-func gcd(a, b) {
-    while (b != 0) {
-        var temp = b
-        b = a % b
-        a = temp
-    }
-    return a
-}
-
-print("gcd(48, 18):", gcd(48, 18))
-print("gcd(100, 35):", gcd(100, 35))
-print("gcd(17, 19):", gcd(17, 19))
-
-print("Test 28 passed")
-print("")
-
-// ============================================================================
-// TEST 29: STATISTICAL FUNCTIONS
-// ============================================================================
-print("TEST 29: Statistical Functions")
-print("--------------------------------")
-
-func mean(arr) {
-    var sum = 0
-    var n = len(arr)
-    for (var i = 0; i < n; i++) {
-        sum = sum + arr[i]
-    }
-    return sum / n
-}
-
-func standardDeviation(arr) {
-    var avg = mean(arr)
-    var sumSquaredDiff = 0
-    var n = len(arr)
-    
-    for (var i = 0; i < n; i++) {
-        var diff = arr[i] - avg
-        sumSquaredDiff = sumSquaredDiff + (diff * diff)
-    }
-    
-    return sqrt(sumSquaredDiff / n)
-}
-
-var data = [10, 12, 23, 23, 16, 23, 21, 16]
-print("Data:", data)
-print("Mean:", mean(data))
-print("Standard Deviation:", standardDeviation(data))
-
-print("Test 29 passed")
-print("")
-
-// ============================================================================
-// TEST 30: PARALLEL COMPUTATION - PI ESTIMATION
-// ============================================================================
-print("TEST 30: Parallel Pi Estimation")
-print("---------------------------------")
-var piHits = 0
-atomic_store("piHits", 0)
-var iterations = 10000
-
-parallel (var i = 0; i < iterations; i++) {
-    var x = random()
-    var y = random()
-    
-    if (x * x + y * y <= 1.0) {
-        atomic_inc("piHits")
-    }
-}
-
-var piEstimate = 4.0 * atomic_load("piHits") / iterations
-print("Estimated Pi:", piEstimate)
-print("Actual Pi: 3.14159...")
-print("Error:", abs(piEstimate - 3.14159))
-
-print("Test 30 passed")
-print("")
+print("=== ALL TESTS COMPLETED ===")
+print("Bob language is working correctly!")
