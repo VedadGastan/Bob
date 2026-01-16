@@ -43,7 +43,7 @@ void runFile(const std::string& filename) {
 }
 
 void runRepl() {
-	std::cout << "Bob Language REPL v1.0 (Python/Ruby Syntax)" << std::endl;
+	std::cout << "Bob Language REPL v1.0" << std::endl;
 	std::cout << "Type 'exit' to quit" << std::endl;
 	std::cout << std::endl;
 

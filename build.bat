@@ -1,47 +1,45 @@
-﻿@echo off
-setlocal enabledelayedexpansion
+@echo off
+setlocal
 
-set COMPILER=g++
-set FLAGS=-std=c++17 -Wall -Wextra -O2
-set OUTPUT=build\bob.exe
-set SOURCE=main.cpp
+set "COMPILER=g++"
+set "FLAGS=-std=c++17 -Wall -Wextra -O2"
+set "OUTPUT=build\bob.exe"
+set "SOURCE=main.cpp"
 
-if "%1"=="" goto help
-if "%1"=="build" goto build
-if "%1"=="run" goto run
-goto help
+if /I "%1"=="build" goto :build
+if /I "%1"=="run" goto :run
+echo Usage: build.bat [build|run]
+goto :eof
 
 :build
 if not exist build mkdir build
-%COMPILER% %FLAGS% %SOURCE% -o %OUTPUT% 2>nul
+echo Compiling...
+
+%COMPILER% %FLAGS% %SOURCE% -o %OUTPUT% > build.log 2>&1
+
 if %errorlevel% equ 0 (
-    echo Build successful
+    echo Build successful.
+    if exist build.log del build.log
 ) else (
-    echo Build failed
+    echo Build failed! Here are the errors:
+    echo ---------------------------------
+    type build.log
+    echo ---------------------------------
+    if exist build.log del build.log
     exit /b 1
 )
-goto end
+exit /b 0
 
 :run
-if not exist %OUTPUT% call :build
-if "%2"=="" (
-    echo Usage: build.bat run ^<filename^>
+if not exist "%OUTPUT%" (
+    call :build
+    if errorlevel 1 exit /b 1
+)
+
+if "%~2" == "" (
+    echo Error: Missing filename. Usage: build.bat run ^<file^>
     exit /b 1
 )
-%OUTPUT% %2
-goto end
 
-:help
-echo Usage: build.bat [command]
-echo.
-echo Commands:
-echo   build       - Compile the interpreter
-echo   run ^<file^>  - Run a Bob program
-echo.
-echo Examples:
-echo   build.bat build
-echo   build.bat run program.bob
-goto end
-
-:end
-endlocal
+"%OUTPUT%" "%~2"
+exit /b 0

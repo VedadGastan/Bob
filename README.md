@@ -1,271 +1,336 @@
 # Bob Programming Language
 
-Bob je interpretirani programski jezik visokog nivoa dizajniran kao imperativni jezik opste namjene sa podrskom za paralelno programiranje.
+A dynamically-typed, interpreted programming language with built-in parallel execution support, inspired by Python and C++ syntax.
 
-## Karakteristike
+## Overview
 
-- **Dinamicki tipiziran** - varijable nemaju eksplicitne tipove
-- **Imperativna paradigma** - sa elementima funkcionalnog programiranja
-- **Funkcije prvog reda** - funkcije kao vrijednosti
-- **Ugradjena paralelizacija** - `parallel` petlje za visenitno izvrsavanje
-- **Atomicne operacije** - thread-safe pristup dijeljenim podacima
-- **C-ovska sintaksa** - citljiva i intuitivna
+Bob is an educational programming language developed for the Programming Languages and Compilers course at the Faculty of Electrical Engineering, University of Sarajevo. It features a tree-walking interpreter implemented in C++.
 
-## Instalacija
+## Features
 
-### Preduslov
-- C++ kompajler (g++) sa podrskom za C++17
-- Windows operativni sistem
+- **Dynamic typing** - types determined at runtime
+- **First-class functions** - functions as values with closure support
+- **Parallel execution** - built-in `parallel` loops with thread-safe operations
+- **Simple syntax** - optional semicolons, familiar control structures
+- **Interactive REPL** - for quick experimentation
 
-### Kompajliranje
+## Installation
 
+```bash
+# Clone the repository
+git clone https://github.com/VedadGastan/Bob.git
+cd Bob
+```
+
+### Building and Running
+
+**Build the compiler:**
 ```bash
 build.bat build
 ```
 
-## Pokretanje
-
-### Pokretanje Bob programa
-
+**Run a Bob script:**
 ```bash
-build.bat run <ime_fajla.bob>
+build.bat run examples/script.bob
 ```
 
-Primjer:
+**Run REPL (interactive mode):**
 ```bash
-build.bat run examples/hello.bob
+build\bob.exe
 ```
 
-## Tipovi podataka
+The build script uses the following compiler flags:
+- `-std=c++17` - C++17 standard
+- `-Wall -Wextra` - all warnings enabled
+- `-O2` - optimization level 2
 
-- **Number** - decimalni brojevi (64-bit floating point)
-- **String** - tekstualni nizovi
-- **Bool** - `true` / `false`
-- **Nil** - null vrijednost
-- **Array** - dinamicki nizovi
-- **Function** - funkcije kao objekti
+## Quick Start
 
-## Osnovna sintaksa
+### Hello World
 
-### Varijable
+```bob
+print("Hello, World!")
+```
+
+### Variables
 
 ```bob
 var x = 10
-var ime = "Bob"
-var brojevi = [1, 2, 3, 4, 5]
+var name = "Bob"
+var numbers = [1, 2, 3, 4, 5]
 ```
 
-### Funkcije
+Semicolons are optional:
 
 ```bob
-func saberi(a, b) {
+var x = 10;
+var y = 20;
+print(x + y)  // works without semicolon too
+```
+
+### Functions
+
+```bob
+func add(a, b) {
     return a + b
 }
 
-var rezultat = saberi(5, 3)
-print(rezultat)  // 8
+func greet(name) {
+    print("Hello, " + name)
+}
+
+var result = add(5, 3)
+greet("Alice")
 ```
 
-### Kontrolne strukture
+### Closures
+
+```bob
+func makeCounter() {
+    var count = 0
+    
+    func increment() {
+        count++
+        return count
+    }
+    
+    return increment
+}
+
+var counter = makeCounter()
+print(counter())  // 1
+print(counter())  // 2
+```
+
+### Control Flow
 
 ```bob
 // If-elif-else
 if (x > 10) {
-    print("Vece od 10")
+    print("Greater than 10")
 } elif (x > 5) {
-    print("Vece od 5")
+    print("Greater than 5")
 } else {
-    print("5 ili manje")
+    print("5 or less")
 }
 
-// While petlja
+// While loop
 var i = 0
 while (i < 5) {
     print(i)
     i++
 }
 
-// For petlja
+// For loop
 for (var i = 0; i < 10; i++) {
     print(i)
 }
 ```
 
-## Paralelno programiranje
-
-### Parallel petlja
+### Arrays
 
 ```bob
-var podaci = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+var arr = [1, 2, 3, 4, 5]
+print(arr[0])      // 1
+print(arr[-1])     // 5 (negative indexing)
 
-parallel (var i = 0; i < len(podaci); i++) {
-    podaci[i] = podaci[i] * podaci[i]
+arr[2] = 99        // modify element
+push(arr, 6)       // add to end
+var last = pop(arr) // remove from end
+
+print(len(arr))    // length
+```
+
+### Parallel Execution
+
+```bob
+var sum = 0
+atomic_store("sum", 0)
+
+parallel (var i = 1; i <= 100; i++) {
+    atomic_add("sum", i)
 }
 
-print(podaci)  // [1, 4, 9, 16, 25, 36, 49, 64, 81, 100]
+print(atomic_load("sum"))  // 5050
 ```
 
-### Atomicne operacije
+## Data Types
+
+| Type | Description | Example |
+|------|-------------|---------|
+| `nil` | Null/undefined value | `var x` |
+| `bool` | Boolean | `true`, `false` |
+| `number` | Double-precision float | `42`, `3.14` |
+| `string` | Text | `"Hello"` |
+| `array` | Dynamic array | `[1, 2, 3]` |
+| `function` | First-class function | `func add(a,b) {...}` |
+
+## Operators
+
+### Arithmetic
+`+` `-` `*` `/` `%` `**` (exponentiation)
+
+### Comparison
+`==` `!=` `<` `<=` `>` `>=`
+
+### Logical
+`and` `or` `not`
+
+### Assignment
+`=` `+=` `-=` `*=` `/=` `%=`
+
+### Increment/Decrement
+`++` `--` (postfix only)
+
+### Membership
+`in` (check if element in array/string)
+
+## Built-in Functions
+
+### I/O
+- `print(...)` - print to stdout
+- `input(prompt)` - read from stdin
+
+### Math
+- `sqrt(x)`, `pow(x, y)`, `abs(x)`
+- `floor(x)`, `ceil(x)`, `round(x)`
+- `sin(x)`, `cos(x)`, `tan(x)`, `log(x)`
+- `random()` - random number [0, 1)
+
+### Array
+- `len(x)` - length of array/string
+- `push(arr, val)` - add to end
+- `pop(arr)` - remove from end
+
+### Utility
+- `time()` - current time in milliseconds
+- `sleep(ms)` - pause execution
+
+### Parallel
+- `thread_id()` - current thread ID
+- `num_threads()` - number of available threads
+- `atomic_store(name, val)` - atomic store
+- `atomic_load(name)` - atomic load
+- `atomic_add(name, val)` - atomic addition
+- `atomic_inc(name)` - atomic increment
+- `atomic_dec(name)` - atomic decrement
+- `atomic_xchg(name, val)` - atomic exchange
+- `atomic_cas(name, expected, new)` - compare-and-swap
+
+## Examples
+
+### Fibonacci
 
 ```bob
-var brojac = 0
-
-parallel (var i = 0; i < 1000; i++) {
-    atomic_inc("brojac")
-}
-
-print(brojac)  // 1000
-```
-
-#### Dostupne atomicne funkcije:
-
-- `atomic_store(var, val)` - atomicno postavljanje
-- `atomic_load(var)` - atomicno citanje
-- `atomic_add(var, val)` - atomicno dodavanje
-- `atomic_sub(var, val)` - atomicno oduzimanje
-- `atomic_inc(var)` - atomicni inkrement
-- `atomic_dec(var)` - atomicni dekrement
-- `atomic_xchg(var, new_val)` - atomicna zamjena
-- `atomic_cas(var, expected, new_val)` - compare-and-swap
-
-## Standardna biblioteka
-
-### Osnovne funkcije
-
-```bob
-print("Hello World")           // Ispis
-var duzina = len([1, 2, 3])   // Duzina niza/stringa
-var unos = input("Unesite: ") // citanje unosa
-```
-
-### Matematicke funkcije
-
-```bob
-sqrt(16)        // 4 - korijen
-pow(2, 3)       // 8 - stepen
-abs(-5)         // 5 - apsolutna vrijednost
-floor(3.7)      // 3 - zaokruzivanje dole
-ceil(3.2)       // 4 - zaokruzivanje gore
-round(3.5)      // 4 - zaokruzivanje
-sin(x)          // sinus
-cos(x)          // kosinus
-tan(x)          // tangens
-log(x)          // prirodni logaritam
-```
-
-### Operacije sa nizovima
-
-```bob
-var lista = [1, 2, 3]
-push(lista, 4)              // Dodaj na kraj
-var zadnji = pop(lista)     // Ukloni zadnji element
-```
-
-### Pomocne funkcije
-
-```bob
-random()         // Slucajan broj [0, 1)
-time()           // Vrijeme u milisekundama
-sleep(1000)      // Pauza (ms)
-thread_id()      // ID trenutne niti
-num_threads()    // Broj dostupnih niti
-```
-
-## Operatori
-
-### Aritmeticki
-```bob
-+ - * / %        // Osnovne operacije
-**               // Stepenovanje
-++ --            // Inkrement/dekrement
-+= -= *= /= %=   // Slozena dodjela
-```
-
-### Relacioni
-```bob
-== != < <= > >=
-```
-
-### Logicki
-```bob
-and or not
-```
-
-### Operator clanstva
-```bob
-3 in [1, 2, 3]           // true
-"World" in "Hello World" // true
-```
-
-## Primjeri
-
-### Fibonacijev niz
-
-```bob
-func fibonacci(n) {
-    if (n <= 1) return n
-    return fibonacci(n - 1) + fibonacci(n - 2)
+func fib(n) {
+    if (n <= 1) {
+        return n
+    }
+    return fib(n - 1) + fib(n - 2)
 }
 
 for (var i = 0; i < 10; i++) {
-    print(fibonacci(i))
+    print(fib(i))
 }
 ```
 
-### Paralelna obrada matrice
+### Filter Even Numbers
 
 ```bob
-var matrica = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
-
-parallel (var i = 0; i < len(matrica); i++) {
-    for (var j = 0; j < len(matrica[i]); j++) {
-        matrica[i][j] = matrica[i][j] * 2
+func filterEven(arr) {
+    var result = []
+    for (var i = 0; i < len(arr); i++) {
+        if (arr[i] % 2 == 0) {
+            push(result, arr[i])
+        }
     }
+    return result
 }
 
-print(matrica);
+var numbers = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+var evens = filterEven(numbers)
+print(evens)  // [2, 4, 6, 8, 10]
 ```
 
-### Funkcije viseg reda
+### Parallel Sum of Squares
 
 ```bob
-func primijeni(niz, funkcija) {
-    var rezultat = []
-    for (var i = 0; i < len(niz); i++) {
-        push(rezultat, funkcija(niz[i]))
-    }
-    return rezultat
+var n = 1000
+atomic_store("sum", 0)
+
+parallel (var i = 1; i <= n; i++) {
+    atomic_add("sum", i * i)
 }
 
-func kvadrat(x) {
-    return x * x
-}
-
-var brojevi = [1, 2, 3, 4, 5]
-var kvadrati = primijeni(brojevi, kvadrat)
-print(kvadrati)  // [1, 4, 9, 16, 25]
+print("Sum of squares: " + atomic_load("sum"))
 ```
 
-## Struktura projekta
+## Architecture
+
+Bob uses a **tree-walking interpreter** with four main components:
+
+1. **Lexer** - tokenizes source code
+2. **Parser** - builds Abstract Syntax Tree (AST)
+3. **AST** - represents program structure
+4. **Interpreter** - directly executes AST
+
+### Memory Management
+- Uses C++ `std::shared_ptr` for automatic memory management
+- Reference counting handles deallocation
+
+### Threading
+- Parallel loops use `std::thread` library
+- Number of threads determined by `std::thread::hardware_concurrency()`
+- Thread-safe global variable access via `std::mutex`
+
+## Language Characteristics
+
+- **Dynamically typed** - no type declarations, runtime type checking
+- **Lexically scoped** - closures capture surrounding environment
+- **Interpreted** - no compilation, direct AST execution
+- **Garbage collected** - via reference counting with shared pointers
+
+## Limitations
+
+- No `break`/`continue` statements (yet)
+- No exception handling
+- No module/import system
+- No classes/objects
+- No lambda expressions
+- Parallel loops require simple structure (simple init/condition/increment)
+
+## Error Handling
+
+Bob reports errors with line and column information:
 
 ```
-Bob/
-??? main.cpp              # Glavni C++ fajl interpretera
-??? build.bat             # Build skripta
-??? README.md             # Ova dokumentacija
-??? examples/             # Primjeri Bob programa
-    ??? *.bob
+[line 5:10] RuntimeError: Undefined variable 'x'
+[line 3:5] ParseError: Expect ')' after expression
 ```
 
-## Autori
+## REPL Mode
 
-- Vedad Gastan (19685)
-- Naila Delalic (19687)
+Start the interactive interpreter:
 
-**Univerzitet u Sarajevu**  
-**Elektrotehnicki fakultet Sarajevo**  
-**Odsjek za racunarstvo i informatiku**
+```bash
+$ build\bob.exe
+Bob Language REPL v1.0
+Type 'exit' to quit
+
+>>> var x = 10
+>>> print(x * 2)
+20
+>>> exit
+```
+
+## Authors
+
+- Vedad Gaštan (19685)
+- Naila Delalić (19687)
+
+**Faculty of Electrical Engineering, University of Sarajevo**  
+*Programming Languages and Compilers Course*
 
 ---
 
-*Programski jezici i prevodioci - Decembar 2025*
+**Note**: Bob is an educational programming language designed for learning interpreter implementation. It is not intended for production use.
